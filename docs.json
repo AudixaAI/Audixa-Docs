@@ -17,8 +17,13 @@
             "group": "Getting started",
             "pages": [
               "index",
-              "quickstart",
-              "development"
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages":[
+              "features/tts"
             ]
           },
           {

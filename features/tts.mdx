@@ -1,0 +1,79 @@
+---
+title: "Text To Speech"
+---
+
+This guide explains all the features and settings of the primary **Text-to-Speech** dashboard, allowing you to convert your text into natural-sounding speech.
+
+The dashboard provides a simple interface for basic generation and a powerful set of controls for advanced users.
+
+## The Generation Workflow
+
+At its simplest, the workflow involves four steps:
+
+1. **Select Your Model:** Choose between the **Base Model** (for a wide variety of voices) or the **Advanced Model** (for cloning and fine-tuning).
+2. **Choose Your Voice:** Pick from our extensive library of preset voices or your own custom/cloned voices.
+3. **Enter Your Text:** Type or paste your script into the text box.
+4. **Click Generate:** Create your audio.
+
+## Model Selection
+
+You can switch between two different models, each with its own voices and features.
+
+- **Base Model:** This is the best choice for the majority of applications. It gives you access to our largest library of high-quality preset voices and is optimized for reliability and speed.
+- **Advanced Model:** This model unlocks the **Advanced Model Settings** panel, allowing you to control emotion, creativity, and more. This model is also required for using any of your **Custom Voices** or **Instant Clones**.
+
+## Text Input
+
+This is the main text area where you will write or paste your script.
+
+---
+
+## Core Settings
+
+These settings are available for both Base and Advanced models.
+
+### Voice
+
+Clicking the **Select Voice** button opens the Voice Modal, where you can browse, search, and select from the entire voice library available to your plan. This includes all preset voices as well as any custom voices or clones you have created.
+
+### Speed
+
+This slider controls the playback speed of the generated speech.
+
+- **Range:** 0.5x (half speed) to 2.0x (double speed).
+- **Default:** 1.0x (normal speed).
+
+---
+
+## Advanced Model Settings
+
+These settings are **only visible and active when you select the Advanced Model**. They give you granular control over the vocal performance.
+
+| Setting         | Range      | Default   | Description                                                                                                                                                                                   |
+| :-------------- | :--------- | :-------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Emotion**     | Dropdown   | `Neutral` | Sets the emotional tone of the speech. Available emotions: **Neutral**, **Happy**, **Sad**, **Angry**, and **Surprised**.                                                                     |
+| **Temperature** | 0.7 - 1.0  | `0.9`     | This is the **Creativity Knob**. It controls randomness. Higher values lead to more emotional variety, while lower values result in more stable and predictable speech.                       |
+| **Top P**       | 0.7 - 0.98 | `0.9`     | This is a **Plausibility Filter**. It sets the range of likely tones the AI can use. Higher values allow for more diverse and creative speech, while lower values create more focused speech. |
+
+---
+
+## Generating & Playing Audio
+
+After you click the **Generate Speech** button, the waveform player will appear once the audio is ready.
+
+This player allows you to:
+
+- **Play / Pause:** Listen to your generated audio.
+- **Download:** Save the audio file (as an MP3) directly to your computer.
+- **View Duration:** See the total length of the generated audio clip.
+
+---
+
+## Automate with the API
+
+While the dashboard is perfect for testing voices and generating individual clips, you can automate your entire audio workflow using the Audixa AI API. This allows you to integrate TTS directly into your applications, websites, or content creation pipelines.
+
+To get started with programmatic generation, please see our **API Reference**:
+
+- [**API Introduction:**](/api/api-intro) Learn about authentication and the core asynchronous workflow.
+- [**`Generate Speech (POST /tts):`**](/api/endpoints/tts) Get the full technical details for submitting generation tasks programmatically.
