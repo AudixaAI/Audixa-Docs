@@ -1,0 +1,168 @@
+---
+title: "POST /tts"
+api: "POST https://api.audixa.ai/v2/tts"
+description: "Start a text-to-speech generation job"
+---
+
+Submits a text-to-speech task and returns a `generation_id` for tracking. The audio is generated asynchronously—use the [/status](/api-reference/status) endpoint to check when it's ready.
+
+## Request
+
+<ParamField body="text" type="string" required>
+  The text to convert to speech. Maximum 5,000 characters.
+</ParamField>
+
+<ParamField body="voice" type="string" required>
+  The voice ID to use. Get available voices from [/voices](/api-reference/voices).
+</ParamField>
+
+<ParamField body="model" type="string" required>
+  The model tier to use. Must be `base` or `advance`.
+  
+  - `base`: Standard high-quality voices (1 credit/token)
+  - `advance`: Premium voices with emotions and cloning (4 credits/token)
+</ParamField>
+
+<ParamField body="speed" type="number" default="1.0">
+  Playback speed multiplier. Range: `0.5` to `2.0`.
+</ParamField>
+
+<ParamField body="emotion" type="string" default="neutral">
+  Emotional tone (Advance model only). Options: `neutral`, `happy`, `sad`, `angry`, `surprised`.
+</ParamField>
+
+<ParamField body="temperature" type="number" default="0.9">
+  Creativity control (Advance model only). Range: `0.7` to `1.0`. Higher = more variation.
+</ParamField>
+
+<ParamField body="top_p" type="number" default="0.9">
+  Plausibility filter (Advance model only). Range: `0.7` to `0.98`. Higher = more diverse.
+</ParamField>
+
+## Response
+
+<ResponseField name="generation_id" type="string">
+  Unique identifier for this generation job. Use this to poll [/status](/api-reference/status).
+</ResponseField>
+
+## Examples
+
+<RequestExample>
+```bash cURL
+curl -X POST "https://api.audixa.ai/v2/tts" \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -d '{
+    "text": "Welcome to Audixa! This is a demonstration of our text-to-speech API.",
+    "voice": "aura-asteria-en",
+    "model": "base",
+    "speed": 1.0
+  }'
+```
+
+```python Python
+import audixa
+from audixa import AudixaClient
+
+audixa.set_api_key("YOUR_API_KEY")
+
+# Start TTS generation (returns generation_id immediately)
+generation_id = audixa.tts(
+    "Welcome to Audixa! This is a demonstration of our text-to-speech API.",
+    voice="am_ethan",
+    model="base",
+    speed=1.0,
+)
+print(f"Generation ID: {generation_id}")
+```
+
+```javascript JavaScript
+import Audixa from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+// Start TTS generation (returns generation_id immediately)
+const { generation_id } = await audixa.startTTS({
+  text: 'Welcome to Audixa! This is a demonstration of our text-to-speech API.',
+  voice: 'am_ethan',
+  model: 'base',
+  speed: 1.0
+});
+
+console.log('Generation ID:', generation_id);
+```
+
+```typescript TypeScript
+import Audixa, { StartTTSRequest } from 'audixa';
+
+const audixa = new Audixa(process.env.AUDIXA_API_KEY!);
+
+const request: StartTTSRequest = {
+  text: 'Welcome to Audixa! This is a demonstration of our text-to-speech API.',
+  voice: 'am_ethan',
+  model: 'base',
+  speed: 1.0
+};
+
+const { generation_id } = await audixa.startTTS(request);
+console.log('Generation ID:', generation_id);
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201 Created
+{
+  "generation_id": "gen_abc123xyz789def456"
+}
+```
+</ResponseExample>
+
+## Error Responses
+
+<Accordion title="400 Bad Request">
+Invalid or missing parameters.
+
+```json
+{
+  "detail": "Validation error",
+  "errors": [
+    {"field": "text", "message": "Text is required"},
+    {"field": "model", "message": "Model must be 'base' or 'advance'"}
+  ]
+}
+```
+</Accordion>
+
+<Accordion title="401 Unauthorized">
+Missing or invalid API key.
+
+```json
+{
+  "detail": "Invalid or missing API key"
+}
+```
+</Accordion>
+
+<Accordion title="402 Payment Required">
+Insufficient credits for this request.
+
+```json
+{
+  "detail": "Insufficient Balance"
+}
+```
+</Accordion>
+
+<Accordion title="429 Too Many Requests">
+Rate limit exceeded.
+
+```json
+{
+  "detail": "Rate limit exceeded. Please retry after 30 seconds."
+}
+```
+</Accordion>
+
+## Next Steps
+
+After receiving the `generation_id`, poll the [/status](/api-reference/status) endpoint to check when your audio is ready.

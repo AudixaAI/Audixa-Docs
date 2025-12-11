@@ -1,0 +1,51 @@
+---
+title: "Changelog"
+description: "Updates and version history for the Audixa API"
+---
+
+Track updates, new features, and improvements to the Audixa API.
+
+<Update label="December 2024" description="v2.1.0">
+  ### New Features
+  - Added `emotion` parameter for Advance model voices
+  - Support for `temperature` and `top_p` controls
+  - New British English voices: Luna, Atlas
+  
+  ### Improvements
+  - Reduced average generation time by 30%
+  - Improved audio quality for longer texts
+  - Better error messages with field-level validation
+</Update>
+
+<Update label="November 2024" description="v2.0.0">
+  ### Breaking Changes
+  - API version upgraded to v2 (`/v2/` prefix)
+  - Authentication changed from Bearer token to `x-api-key` header
+  
+  ### New Features
+  - Async workflow with `/tts` and `/status` endpoints
+  - Voice cloning support in Advance model
+  - Speed control parameter (0.5x - 2.0x)
+  
+  ### Improvements
+  - New Base model voices with improved naturalness
+  - Rate limit headers on all responses
+</Update>
+
+<Update label="October 2024" description="v1.5.0">
+  ### New Features
+  - Added `/voices` endpoint to list available voices
+  - Model parameter to choose between Base and Advance
+  
+  ### Improvements
+  - Expanded voice library with 20+ new voices
+  - Credit usage optimization for Base model
+</Update>
+
+<Update label="September 2024" description="v1.0.0">
+  ### Initial Release
+  - Text-to-Speech API with multiple voice options
+  - Credit-based billing system
+  - Dashboard for voice preview and testing
+  - API key management
+</Update>

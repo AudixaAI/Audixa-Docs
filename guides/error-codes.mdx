@@ -1,0 +1,215 @@
+---
+title: "Error Codes"
+description: "HTTP status codes and error responses from the Audixa API"
+---
+
+The Audixa API uses standard HTTP status codes to indicate the success or failure of requests. This guide documents all possible error responses.
+
+## Error Response Format
+
+All error responses follow a consistent JSON format:
+
+```json
+{
+  "detail": "Human-readable error message"
+}
+```
+
+Some errors may include additional context:
+
+```json
+{
+  "detail": "Validation error",
+  "errors": [
+    {"field": "text", "message": "Text is required"},
+    {"field": "voice", "message": "Invalid voice ID"}
+  ]
+}
+```
+
+## HTTP Status Codes
+
+### Success Codes
+
+| Code | Status | Description |
+|------|--------|-------------|
+| `200` | OK | Request succeeded (GET requests) |
+| `201` | Created | Resource created successfully (POST /tts) |
+
+### Client Error Codes
+
+| Code | Status | Description |
+|------|--------|-------------|
+| `400` | Bad Request | Invalid request parameters |
+| `401` | Unauthorized | Missing or invalid API key |
+| `402` | Payment Required | Insufficient credits |
+| `404` | Not Found | Resource not found (e.g., invalid generation_id) |
+| `422` | Unprocessable Entity | Validation error |
+| `429` | Too Many Requests | Rate limit exceeded |
+
+### Server Error Codes
+
+| Code | Status | Description |
+|------|--------|-------------|
+| `500` | Internal Server Error | Unexpected server error |
+| `503` | Service Unavailable | Service temporarily unavailable |
+
+## Common Errors
+
+### 400 Bad Request
+
+Returned when request parameters are missing or invalid.
+
+<ResponseExample>
+```json 400 Bad Request
+{
+  "detail": "Validation error",
+  "errors": [
+    {"field": "text", "message": "Text is required"},
+    {"field": "model", "message": "Model must be 'base' or 'advance'"}
+  ]
+}
+```
+</ResponseExample>
+
+**Common causes:**
+- Missing required fields (`text`, `voice`, `model`)
+- Invalid `model` value (must be `base` or `advance`)
+- Text exceeds maximum length
+
+---
+
+### 401 Unauthorized
+
+Returned when authentication fails.
+
+<ResponseExample>
+```json 401 Unauthorized
+{
+  "detail": "Invalid or missing API key"
+}
+```
+</ResponseExample>
+
+**Common causes:**
+- Missing `x-api-key` header
+- Invalid or revoked API key
+
+---
+
+### 402 Payment Required
+
+Returned when your account has insufficient credits.
+
+<ResponseExample>
+```json 402 Payment Required
+{
+  "detail": "Insufficient Balance"
+}
+```
+</ResponseExample>
+
+**Solution:** Add credits via the [Billing Dashboard](https://audixa.ai/dashboard/billing).
+
+---
+
+### 404 Not Found
+
+Returned when a requested resource doesn't exist.
+
+<ResponseExample>
+```json 404 Not Found
+{
+  "detail": "Generation not found"
+}
+```
+</ResponseExample>
+
+**Common causes:**
+- Invalid `generation_id` when checking status
+- Generation expired (older than 24 hours)
+
+---
+
+### 429 Too Many Requests
+
+Returned when you exceed the rate limit.
+
+<ResponseExample>
+```json 429 Too Many Requests
+{
+  "detail": "Rate limit exceeded. Please retry after 30 seconds."
+}
+```
+</ResponseExample>
+
+**Solution:** Implement exponential backoff retry logic. See [Rate Limits](/guides/rate-limits).
+
+---
+
+### 500 Internal Server Error
+
+Returned when an unexpected server error occurs.
+
+<ResponseExample>
+```json 500 Internal Server Error
+{
+  "detail": "An unexpected error occurred. Please try again."
+}
+```
+</ResponseExample>
+
+**Solution:** Retry the request. If the error persists, contact [support@audixa.ai](mailto:support@audixa.ai).
+
+## Error Handling Example
+
+<CodeGroup>
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.audixa.ai/v2/tts",
+    headers={"x-api-key": "YOUR_API_KEY"},
+    json={"text": "Hello", "voice": "aura-asteria-en", "model": "base"}
+)
+
+if response.status_code == 201:
+    print("Success:", response.json())
+elif response.status_code == 401:
+    print("Authentication failed. Check your API key.")
+elif response.status_code == 402:
+    print("Insufficient credits. Please add funds.")
+elif response.status_code == 429:
+    print("Rate limited. Retry later.")
+else:
+    print(f"Error {response.status_code}:", response.json().get("detail"))
+```
+
+```javascript JavaScript
+const response = await fetch("https://api.audixa.ai/v2/tts", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "x-api-key": "YOUR_API_KEY"
+  },
+  body: JSON.stringify({
+    text: "Hello",
+    voice: "aura-asteria-en",
+    model: "base"
+  })
+});
+
+if (response.status === 201) {
+  console.log("Success:", await response.json());
+} else if (response.status === 401) {
+  console.log("Authentication failed. Check your API key.");
+} else if (response.status === 402) {
+  console.log("Insufficient credits. Please add funds.");
+} else if (response.status === 429) {
+  console.log("Rate limited. Retry later.");
+} else {
+  const error = await response.json();
+  console.log(`Error ${response.status}:`, error.detail);
+}
+```
+</CodeGroup>

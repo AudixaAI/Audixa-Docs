@@ -1,0 +1,312 @@
+---
+title: "Node.js SDK"
+description: "Official Node.js + TypeScript SDK for the Audixa Text-to-Speech API"
+---
+
+Official Node.js + TypeScript SDK for the Audixa Text-to-Speech API. Full TypeScript support with complete type definitions.
+
+## Features
+
+<CardGroup cols={2}>
+  <Card title="TypeScript Support" icon="code">
+    Complete type definitions with IDE auto-completion.
+  </Card>
+  <Card title="Dual Module Support" icon="box">
+    Works with both ESM and CommonJS.
+  </Card>
+  <Card title="Error Handling" icon="triangle-exclamation">
+    Custom error classes with detailed error codes.
+  </Card>
+  <Card title="Request Cancellation" icon="xmark">
+    Configurable timeouts and AbortController support.
+  </Card>
+</CardGroup>
+
+## Installation
+
+<CodeGroup>
+```bash npm
+npm install audixa
+```
+
+```bash yarn
+yarn add audixa
+```
+
+```bash pnpm
+pnpm add audixa
+```
+</CodeGroup>
+
+## Quick Start
+
+<Tabs>
+  <Tab title="TypeScript">
+```typescript
+import Audixa from 'audixa';
+
+const audixa = new Audixa('your-api-key');
+
+// Generate TTS and wait for completion
+const audioUrl = await audixa.generateTTS({
+  text: 'Hello! This is a test of the Audixa text-to-speech API.',
+  voice: 'am_ethan',
+  model: 'base'
+});
+
+console.log('Audio URL:', audioUrl);
+```
+  </Tab>
+  <Tab title="JavaScript (ESM)">
+```javascript
+import Audixa from 'audixa';
+
+const audixa = new Audixa('your-api-key');
+
+const audioUrl = await audixa.generateTTS({
+  text: 'Hello! This is a test of the Audixa text-to-speech API.',
+  voice: 'am_ethan'
+});
+
+console.log('Audio URL:', audioUrl);
+```
+  </Tab>
+  <Tab title="JavaScript (CommonJS)">
+```javascript
+const { Audixa } = require('audixa');
+
+const audixa = new Audixa('your-api-key');
+
+audixa.generateTTS({
+  text: 'Hello! This is a test of the Audixa text-to-speech API.',
+  voice: 'am_ethan',
+  model: 'base'
+}).then(audioUrl => {
+  console.log('Audio URL:', audioUrl);
+});
+```
+  </Tab>
+</Tabs>
+
+## Configuration
+
+```typescript
+import Audixa from 'audixa';
+
+const audixa = new Audixa('your-api-key', {
+  baseUrl: 'https://api.audixa.ai/v2', // Custom API base URL (optional)
+  timeout: 30000                        // Request timeout in ms (default: 30000)
+});
+```
+
+## API Reference
+
+### Start TTS Generation
+
+Creates a new text-to-speech task and returns a generation ID.
+
+```typescript
+const { generation_id } = await audixa.startTTS({
+  // Required parameters
+  text: 'Your text here (minimum 30 characters)',
+  voice: 'am_ethan',
+
+  // Optional parameters
+  model: 'base',        // 'base' or 'advance'
+  speed: 1.0,           // 0.5 to 2.0
+
+  // Advance model only
+  emotion: 'happy',     // 'neutral', 'happy', 'sad', 'angry', 'surprised'
+  temperature: 0.8,     // 0.7 to 0.9
+  top_p: 0.9,           // 0.7 to 0.98
+  do_sample: true
+});
+
+console.log('Generation ID:', generation_id);
+```
+
+### Poll TTS Status
+
+Check the status of a TTS generation job.
+
+```typescript
+const status = await audixa.getStatus(generation_id);
+
+console.log('Status:', status.status);       // 'Generating', 'Completed', or 'Failed'
+console.log('Audio URL:', status.audio_url); // Available when status is 'Completed'
+```
+
+### Generate TTS (Convenience Method)
+
+Start generation and automatically poll until complete:
+
+```typescript
+const audioUrl = await audixa.generateTTS(
+  { text: 'Your text here', voice: 'am_ethan' },
+  { pollInterval: 1000, maxWaitTime: 60000 }
+);
+```
+
+### Get Available Voices
+
+Retrieve the list of available voices for a specific model.
+
+```typescript
+const { voices } = await audixa.getVoices('base');
+
+for (const voice of voices) {
+  console.log(`${voice.name} (${voice.voice_id})`);
+  console.log(`  Gender: ${voice.gender}`);
+  console.log(`  Accent: ${voice.accent}`);
+  console.log(`  Description: ${voice.description}`);
+}
+```
+
+## Error Handling
+
+The SDK provides a custom `AudixaError` class for comprehensive error handling:
+
+```typescript
+import Audixa, { AudixaError } from 'audixa';
+
+const audixa = new Audixa('your-api-key');
+
+try {
+  const result = await audixa.startTTS({
+    text: 'Hello world',
+    voice: 'am_ethan'
+  });
+} catch (error) {
+  if (error instanceof AudixaError) {
+    console.log('Error code:', error.code);
+    console.log('HTTP status:', error.status);
+    console.log('Message:', error.message);
+
+    switch (error.code) {
+      case 'INVALID_API_KEY':
+        console.log('Please check your API key');
+        break;
+      case 'INSUFFICIENT_CREDITS':
+        console.log('Please add more credits to your account');
+        break;
+      case 'INVALID_PARAMS':
+        console.log('Please check your request parameters');
+        break;
+      case 'TIMEOUT':
+        console.log('The request timed out');
+        break;
+      case 'NETWORK_ERROR':
+        console.log('Network error occurred');
+        break;
+    }
+  }
+}
+```
+
+### Error Codes
+
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `INVALID_PARAMS` | 400 | Invalid request parameters |
+| `INVALID_API_KEY` | 401 | Invalid or missing API key |
+| `INSUFFICIENT_CREDITS` | 402 | Not enough credits in account |
+| `FORBIDDEN` | 403 | Access denied to resource |
+| `NOT_FOUND` | 404 | Resource not found |
+| `TIMEOUT` | - | Request timed out |
+| `NETWORK_ERROR` | - | Network connectivity issue |
+
+## Request Cancellation
+
+All methods support cancellation via `AbortController`:
+
+```typescript
+const controller = new AbortController();
+
+// Cancel after 5 seconds
+setTimeout(() => controller.abort(), 5000);
+
+try {
+  const result = await audixa.startTTS(
+    { text: 'Hello world', voice: 'am_ethan' },
+    { signal: controller.signal }
+  );
+} catch (error) {
+  if (error instanceof AudixaError && error.code === 'TIMEOUT') {
+    console.log('Request was cancelled');
+  }
+}
+```
+
+## TypeScript Types
+
+All types are exported for use in your TypeScript projects:
+
+```typescript
+import Audixa, {
+  // Options
+  AudixaOptions,
+  RequestOptions,
+
+  // TTS types
+  StartTTSRequest,
+  StartTTSResponse,
+  TTSStatusResponse,
+  TTSModel,
+  TTSEmotion,
+  TTSStatus,
+
+  // Voice types
+  GetVoicesResponse,
+  Voice,
+
+  // Error types
+  AudixaError,
+  AudixaErrorCode
+} from 'audixa';
+```
+
+### Type Definitions
+
+```typescript
+// TTS Request
+interface StartTTSRequest {
+  text: string;            // Required, min 30 chars
+  voice: string;           // Required
+  model?: 'base' | 'advance';
+  speed?: number;          // 0.5 - 2.0
+
+  // Advance model only
+  emotion?: 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised';
+  temperature?: number;    // 0.7 - 0.9
+  top_p?: number;          // 0.7 - 0.98
+  do_sample?: boolean;
+}
+
+// TTS Status Response
+interface TTSStatusResponse {
+  status: 'Generating' | 'Completed' | 'Failed';
+  audio_url: string | null;
+  generation_id?: string;
+}
+
+// Voice
+interface Voice {
+  voice_id: string;
+  name: string;
+  gender: string;
+  accent: string;
+  free: boolean;
+  description: string;
+}
+```
+
+## Resources
+
+<CardGroup cols={2}>
+  <Card title="npm Package" icon="npm" href="https://www.npmjs.com/package/audixa">
+    View on npm registry.
+  </Card>
+  <Card title="GitHub Repository" icon="github" href="https://github.com/audixaai/audixa-npm-package">
+    Source code and issues.
+  </Card>
+</CardGroup>

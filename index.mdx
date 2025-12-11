@@ -1,97 +1,73 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Welcome to Audixa"
+description: "High-quality Text-to-Speech API with natural-sounding voices"
 ---
 
-## Setting up
+Audixa is a powerful Text-to-Speech API that converts your text into natural, human-like speech. With support for multiple voices, languages, and customization options, Audixa makes it easy to add voice capabilities to your applications.
 
-Get your documentation site up and running in minutes.
+## Key Features
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+<Columns cols={3}>
+  <Card title="Premium Voices" icon="microphone">
+    Access a library of high-quality, natural-sounding voices in multiple accents and styles.
+  </Card>
+  <Card title="Fast Generation" icon="bolt">
+    Generate speech quickly with our optimized async workflow and low-latency infrastructure.
+  </Card>
+  <Card title="Simple API" icon="code">
+    Integrate in minutes with our straightforward REST API and official SDKs.
+  </Card>
+</Columns>
 
-## Make it yours
+## How It Works
 
-Design a docs site that looks great and empowers your users.
+Audixa uses an **asynchronous workflow** for audio generation:
 
-<Columns cols={2}>
+<Steps>
+  <Step title="Submit Request">
+    Send your text to the `/tts` endpoint with your chosen voice and settings. You'll receive a `generation_id` immediately.
+  </Step>
+  <Step title="Poll Status">
+    Check the `/status` endpoint with your `generation_id` to monitor progress.
+  </Step>
+  <Step title="Download Audio">
+    Once complete, the status response includes an `url` to download your WAV file.
+  </Step>
+</Steps>
+
+## Get Started
+
+<CardGroup cols={2}>
   <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
+    title="Quickstart Guide"
+    icon="rocket"
+    href="/quickstart"
   >
-    Edit your docs locally and preview them in real time.
+    Generate your first audio in under 5 minutes.
   </Card>
   <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
+    title="Authentication"
+    icon="key"
+    href="/guides/authentication"
   >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+    Learn how to authenticate your API requests.
   </Card>
   <Card
-    title="API documentation"
+    title="Voice Library"
+    icon="users"
+    href="/guides/voice-library"
+  >
+    Browse available voices and choose the right one for your use case.
+  </Card>
+  <Card
+    title="API Reference"
     icon="terminal"
     href="/api-reference/introduction"
   >
-    Auto-generate API documentation from OpenAPI specifications.
+    Explore the complete API documentation.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## New to Audixa?
 
-Everything you need to create world-class documentation.
-
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
-
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+Every new account includes **10,000 free credits** to try out the service. [Sign up now](https://audixa.ai/dashboard?utm_source=docs) to get started.

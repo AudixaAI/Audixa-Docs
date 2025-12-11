@@ -1,0 +1,63 @@
+---
+title: "My Generations"
+description: "View and manage your complete text-to-speech generation history"
+---
+
+The Generations page is your central hub for viewing and managing your complete text-to-speech generation history. Every time you create audio, whether through the dashboard or the API, a record of that job appears here.
+
+## Audio File Retention Policy
+
+<Warning>
+  **Important Data Policy**: Audio files generated on our platform are only stored and available for download for **7 days**.
+  
+  After 7 days, the generation record (including the text, status, and voice used) will remain in your history, but the audio file itself will be purged and will no longer be downloadable.
+  
+  Please be sure to download any essential audio files within this 7-day window.
+</Warning>
+
+## Filtering and Searching History
+
+This page provides several tools to help you find specific generation tasks quickly.
+
+<CardGroup cols={2}>
+  <Card title="Filter by Status" icon="filter">
+    Narrow the list to show jobs with a specific status:
+    - **Completed**: Successfully generated audio
+    - **Generating**: Jobs still in progress
+    - **Failed**: Jobs that could not be completed
+  </Card>
+  <Card title="Filter by Model" icon="sliders">
+    See only generations created with either the **Base** or **Advance** model.
+  </Card>
+  <Card title="Search" icon="magnifying-glass">
+    A free-text search bar to find a generation by searching the text content you submitted.
+  </Card>
+  <Card title="Clear Filters" icon="xmark">
+    Reset all active filters and searches, showing the complete, unfiltered history.
+  </Card>
+</CardGroup>
+
+## Generation Details
+
+Each item in the list provides a complete summary of the generation task:
+
+| Field | Description |
+|-------|-------------|
+| **Text** | The original text input |
+| **Voice ID** | The voice used for generation |
+| **Model** | Base or Advance |
+| **Created** | The creation date and time |
+| **Status** | Completed, Generating, or Failed |
+| **Download** | Button to save the audio file |
+
+<Note>
+  The Download button will only be active for "Completed" generations that are less than 7 days old.
+</Note>
+
+## Pagination
+
+Your generation history is split into multiple pages. Use the **Previous** and **Next** buttons at the bottom of the list to navigate through your older records.
+
+<Card title="View Generations" icon="list" href="https://audixa.ai/dashboard/generations">
+  Go to your Generations page in the dashboard.
+</Card>

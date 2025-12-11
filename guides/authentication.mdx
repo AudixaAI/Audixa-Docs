@@ -1,0 +1,112 @@
+---
+title: "Authentication"
+description: "How to authenticate your Audixa API requests"
+---
+
+All Audixa API requests require authentication using an API key. This guide explains how to obtain and use your API key.
+
+## Getting Your API Key
+
+<Steps>
+  <Step title="Log In">
+    Sign in to your [Audixa Dashboard](https://audixa.ai/dashboard).
+  </Step>
+  <Step title="Navigate to API Keys">
+    Go to [Settings → API Keys](https://audixa.ai/dashboard/api).
+  </Step>
+  <Step title="Create a Key">
+    Click **Create New Key**, give it a name (e.g., "Production" or "Development"), and copy the generated key.
+  </Step>
+</Steps>
+
+<Warning>
+  Your API key is shown only once. Store it securely immediately after creation.
+</Warning>
+
+## Using Your API Key
+
+Include your API key in the `x-api-key` header with every request:
+
+<CodeGroup>
+```bash cURL
+curl -X POST "https://api.audixa.ai/v2/tts" \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -d '{"text": "Hello world", "voice": "aura-asteria-en", "model": "base"}'
+```
+
+```python Python
+import requests
+
+headers = {
+    "Content-Type": "application/json",
+    "x-api-key": "YOUR_API_KEY"
+}
+
+response = requests.post(
+    "https://api.audixa.ai/v2/tts",
+    headers=headers,
+    json={"text": "Hello world", "voice": "aura-asteria-en", "model": "base"}
+)
+```
+
+```javascript JavaScript
+const response = await fetch("https://api.audixa.ai/v2/tts", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "x-api-key": "YOUR_API_KEY"
+  },
+  body: JSON.stringify({
+    text: "Hello world",
+    voice: "aura-asteria-en",
+    model: "base"
+  })
+});
+```
+</CodeGroup>
+
+## Security Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Keep Keys Secret" icon="lock">
+    Never expose API keys in client-side code, public repos, or logs.
+  </Card>
+  <Card title="Use Environment Variables" icon="terminal">
+    Store keys in environment variables, not in source code.
+  </Card>
+  <Card title="Rotate Regularly" icon="rotate">
+    Rotate keys periodically and immediately if compromised.
+  </Card>
+  <Card title="Use Separate Keys" icon="key">
+    Use different keys for development and production environments.
+  </Card>
+</CardGroup>
+
+## Authentication Errors
+
+If authentication fails, the API returns a `401 Unauthorized` error:
+
+<ResponseExample>
+```json 401 Unauthorized
+{
+  "detail": "Invalid or missing API key"
+}
+```
+</ResponseExample>
+
+**Common causes:**
+- Missing `x-api-key` header
+- Invalid or revoked API key
+- Key copied incorrectly (extra spaces, partial copy)
+
+## Managing API Keys
+
+In the dashboard, you can:
+- **View keys**: See all active keys (only the last 4 characters are shown for security)
+- **Revoke keys**: Immediately disable compromised or unused keys
+- **Create new keys**: Generate additional keys for different use cases
+
+<Info>
+  There's no limit on the number of API keys you can create.
+</Info>

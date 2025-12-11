@@ -1,26 +1,188 @@
 ---
 title: "Quickstart"
-description: "Get up and running with Audixa’s TTS API in minutes. Introduce the 2-step async workflow."
+description: "Generate your first audio with Audixa in under 5 minutes"
 ---
 
-## Get started in three steps
+This guide walks you through generating speech with the Audixa API, from creating your account to downloading your first audio file.
 
-Get up and running with Audixa’s TTS API in minutes. Introduce the 2-step async workflow.
+## Step 1: Get Your API Key
 
-### Step 1: Sign Up & API Key
+<Steps>
+  <Step title="Create an Account">
+    [Sign up for a free Audixa account](https://audixa.ai/auth/signup?utm_source=docs). New accounts receive **10,000 free credits**.
+  </Step>
+  <Step title="Generate API Key">
+    Navigate to [Dashboard → API Keys](https://audixa.ai/dashboard/api) and create a new API key.
+  </Step>
+  <Step title="Copy Your Key">
+    Copy your API key and store it securely. You'll need it for all API requests.
+  </Step>
+</Steps>
 
-To begin, [create a free account](https://audixa.ai/signup?utm_source=Documentation) on the [Audixa website](https://audixa.ai).
+<Warning>
+  Keep your API key secret. Never expose it in client-side code or public repositories.
+</Warning>
 
-Every new account includes 10,000 free credits to try out the service.
+## Step 2: Install the SDK
 
+<CodeGroup>
+```bash Python
+pip install audixa
+```
 
-### Step 2: Generate Your First Speech
+```bash Node.js
+npm install audixa
+```
+</CodeGroup>
 
-You can generate high-quality speech directly from the web dashboard without writing any code.
+## Step 3: Generate Your First Audio
 
-1. Visit the TTS Dashboard.
-2. Select Base Model
-3. Select a preset text like 'Casual Conversation'
-4. Click the generate button
-   
-Your audio will be ready in a few seconds, and you can listen or download it directly from the page.
+The simplest way to generate audio is using the convenience methods that handle the entire async workflow for you:
+
+<CodeGroup>
+```python Python
+import audixa
+
+# Set your API key (or use AUDIXA_API_KEY env variable)
+audixa.set_api_key("YOUR_API_KEY")
+
+# Generate TTS and get audio URL
+audio_url = audixa.tts_and_wait(
+    "Hello! Welcome to Audixa, the best text-to-speech API.",
+    voice="am_ethan",
+)
+print(f"Audio URL: {audio_url}")
+
+# Or save directly to file
+audixa.tts_to_file(
+    "Hello! Welcome to Audixa.",
+    "output.wav",
+    voice="am_ethan",
+)
+```
+
+```typescript TypeScript
+import Audixa from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+// Generate TTS and wait for completion
+const audioUrl = await audixa.generateTTS({
+  text: 'Hello! Welcome to Audixa, the best text-to-speech API.',
+  voice: 'am_ethan',
+  model: 'base'
+});
+
+console.log('Audio URL:', audioUrl);
+```
+
+```javascript JavaScript
+import Audixa from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+const audioUrl = await audixa.generateTTS({
+  text: 'Hello! Welcome to Audixa, the best text-to-speech API.',
+  voice: 'am_ethan',
+  model: 'base'
+});
+
+console.log('Audio URL:', audioUrl);
+```
+
+```bash cURL
+# Step 1: Start TTS job
+curl -X POST "https://api.audixa.ai/v2/tts" \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -d '{
+    "text": "Hello! Welcome to Audixa, the best text-to-speech API.",
+    "voice": "am_ethan",
+    "model": "base"
+  }'
+
+# Response: {"generation_id": "gen_abc123xyz789"}
+
+# Step 2: Poll for status
+curl -X GET "https://api.audixa.ai/v2/status?generation_id=gen_abc123xyz789" \
+  -H "x-api-key: YOUR_API_KEY"
+
+# Response when complete: {"status": "Completed", "audio_url": "https://..."}
+```
+</CodeGroup>
+
+<ResponseExample>
+```json Response
+{
+  "status": "Completed",
+  "audio_url": "https://cdn.audixa.ai/audio/gen_abc123xyz789.wav"
+}
+```
+</ResponseExample>
+
+## Using Advanced Features
+
+<CodeGroup>
+```python Python
+import audixa
+
+audixa.set_api_key("YOUR_API_KEY")
+
+# Base model with speed adjustment
+audio_url = audixa.tts_and_wait(
+    "Welcome to Audixa AI, your text-to-speech solution.",
+    voice="am_ethan",
+    model="base",
+    speed=1.1,  # Slightly faster (0.5 to 2.0)
+)
+
+# Advance model with emotion
+audio_url = audixa.tts_and_wait(
+    "This is exciting news! We have launched.",
+    voice="am_ethan",
+    model="advance",
+    emotion="happy",
+    temperature=0.8,
+)
+```
+
+```typescript TypeScript
+import Audixa from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+// Base model with speed adjustment
+const audioUrl = await audixa.generateTTS({
+  text: 'Welcome to Audixa AI, your text-to-speech solution.',
+  voice: 'am_ethan',
+  model: 'base',
+  speed: 1.1  // Slightly faster (0.5 to 2.0)
+});
+
+// Advance model with emotion
+const emotionalUrl = await audixa.generateTTS({
+  text: 'This is exciting news! We have launched.',
+  voice: 'am_ethan',
+  model: 'advance',
+  emotion: 'happy',
+  temperature: 0.8
+});
+```
+</CodeGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Python SDK" icon="python" href="/sdks/python">
+    Full SDK documentation with async support and error handling.
+  </Card>
+  <Card title="Node.js SDK" icon="node-js" href="/sdks/nodejs">
+    TypeScript SDK with full type definitions.
+  </Card>
+  <Card title="Explore Voices" icon="users" href="/guides/voice-library">
+    Browse the voice library to find the perfect voice for your project.
+  </Card>
+  <Card title="API Reference" icon="book" href="/api-reference/introduction">
+    Learn about all available parameters and options.
+  </Card>
+</CardGroup>
