@@ -92,7 +92,7 @@ console.log('Audio URL:', audioUrl);
 
 ```bash cURL
 # Step 1: Start TTS job
-curl -X POST "https://api.audixa.ai/v2/tts" \
+curl -X POST "https://api.audixa.ai/v3/tts" \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{
@@ -104,7 +104,7 @@ curl -X POST "https://api.audixa.ai/v2/tts" \
 # Response: {"generation_id": "gen_abc123xyz789"}
 
 # Step 2: Poll for status
-curl -X GET "https://api.audixa.ai/v2/status?generation_id=gen_abc123xyz789" \
+curl -X GET "https://api.audixa.ai/v3/tts?generation_id=gen_abc123xyz789" \
   -H "x-api-key: YOUR_API_KEY"
 
 # Response when complete: {"status": "Completed", "audio_url": "https://..."}

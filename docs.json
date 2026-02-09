@@ -9,7 +9,7 @@
   },
   "api": {
     "mdx": {
-      "server": "https://api.audixa.ai/v2",
+      "server": "https://api.audixa.ai/v3",
       "auth": {
         "method": "key",
         "name": "x-api-key"
@@ -35,7 +35,7 @@
               "guides/authentication",
               "guides/rate-limits",
               "guides/error-codes",
-              "guides/pricing-credits",
+              "guides/pricing",
               "guides/voice-library",
               "guides/ai-models"
             ]
@@ -51,10 +51,11 @@
             "group": "Dashboard",
             "pages": [
               "features/tts",
-              "features/voice-cloning",
               "features/custom-voices",
               "features/generations",
-              "features/billing"
+              "features/billing",
+              "features/account",
+              "features/affiliate"
             ]
           }
         ]
@@ -72,8 +73,15 @@
             "group": "Endpoints",
             "pages": [
               "api-reference/tts",
-              "api-reference/status",
+              "api-reference/generation",
+              "api-reference/history",
               "api-reference/voices"
+            ]
+          },
+          {
+            "group": "Streaming",
+            "pages": [
+              "api-reference/streaming"
             ]
           }
         ]

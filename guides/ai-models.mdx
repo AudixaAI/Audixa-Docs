@@ -3,7 +3,7 @@ title: "AI Models"
 description: "Compare Base and Advance models to choose the right one for your needs"
 ---
 
-Audixa AI offers two powerful text-to-speech models to suit different needs: **Base** and **Advance**. Each model is optimized for a different set of use cases, from general-purpose narration to highly expressive, custom voice generation.
+Audixa AI offers two powerful text-to-speech models to suit different needs: **Base** and **Advanced**. Each model is optimized for a different set of use cases, from general-purpose narration to highly expressive, custom voice generation.
 
 Understanding the differences will help you choose the best model for your application.
 
@@ -25,9 +25,9 @@ The Base model is the perfect choice for a wide range of applications. It is des
 
 For the majority of users, the Base model provides more than enough variety and quality to build incredible audio experiences.
 
-## Advance Model
+## Advanced Model
 
-The Advance model is built for users who require the highest level of customization, expressiveness, and unique vocal identity. While it has a smaller library of preset voices, its power lies in its advanced features.
+The Advanced model is built for users who require the highest level of customization, expressiveness, and unique vocal identity. While it has a smaller library of preset voices, its power lies in its advanced features.
 
 <CardGroup cols={2}>
   <Card title="Voice Cloning" icon="clone">
@@ -40,24 +40,24 @@ The Advance model is built for users who require the highest level of customizat
     Fine-tuned for more nuanced and emotionally resonant speech.
   </Card>
   <Card title="Greater Customization" icon="sliders">
-    Detailed control over emotion, temperature, and sampling.
+    Detailed control over expressiveness settings like `cfg_weight`.
   </Card>
 </CardGroup>
 
-The Advance model is ideal for enterprises, creators, and developers who need a signature voice or the flexibility of voice cloning.
+The Advanced model is ideal for enterprises, creators, and developers who need a signature voice or the flexibility of voice cloning.
 
 ## Side-by-Side Comparison
 
-| Feature | Base Model | Advance Model |
+| Feature | Base Model | Advanced Model |
 |---------|------------|---------------|
 | **Preset Voices** | ✅ 54 Voices | ⚪️ Fewer (Focus on custom) |
 | **Voice Cloning** | ❌ Not Supported | ✅ Supported |
 | **Custom Voices** | ❌ Not Supported | ✅ Supported |
-| **Emotion Control** | ❌ Not Supported | ✅ Supported |
-| **Expressiveness** | High Quality & Natural | Highest Quality & Nuanced |
+| **Expressiveness Control** | ❌ Not Supported | ✅ Supported |
+| **Quality** | High Quality & Natural | Highest Quality & Nuanced |
 | **Best For** | General applications | Branding, custom experiences |
-| **API Parameter** | `"base"` | `"advance"` |
-| **Credit Cost** | 1 credit/token | 4 credits/token |
+| **API Parameter** | `"base"` | `"advanced"` |
+| **Cost** | [See Pricing](/guides/pricing) | [See Pricing](/guides/pricing) |
 
 ## Specifying a Model in Your API Request
 
@@ -68,18 +68,19 @@ To use a specific model, set the `model` parameter in your API request:
 ```json
 {
   "text": "Hello, this is a voice from the Base model.",
-  "voice": "am_ethan",
+  "voice_id": "am_ethan",
   "model": "base"
 }
 ```
   </Tab>
-  <Tab title="Advance Model">
+  <Tab title="Advanced Model">
 ```json
 {
-  "text": "Hello, this is a voice from the Advance model.",
-  "voice": "am_ethan",
-  "model": "advance",
-  "emotion": "happy"
+  "text": "Hello, this is a voice from the Advanced model.",
+  "voice_id": "am_ethan",
+  "model": "advanced",
+  "cfg_weight": 3.5,
+  "exaggeration": 0.7
 }
 ```
   </Tab>
@@ -96,16 +97,17 @@ audixa.set_api_key("YOUR_API_KEY")
 # Using Base model
 audio_url = audixa.tts_and_wait(
     "Hello from the Base model.",
-    voice="am_ethan",
+    voice_id="am_ethan",
     model="base",
 )
 
-# Using Advance model with emotion
+# Using Advanced model with expressiveness settings
 audio_url = audixa.tts_and_wait(
-    "Hello from the Advance model!",
-    voice="am_ethan",
-    model="advance",
-    emotion="happy",
+    "Hello from the Advanced model!",
+    voice_id="am_ethan",
+    model="advanced",
+    cfg_weight=3.5,
+    exaggeration=0.7,
 )
 ```
 
@@ -117,16 +119,17 @@ const audixa = new Audixa('YOUR_API_KEY');
 // Using Base model
 const baseAudio = await audixa.generateTTS({
   text: 'Hello from the Base model.',
-  voice: 'am_ethan',
+  voice_id: 'am_ethan',
   model: 'base'
 });
 
-// Using Advance model with emotion
+// Using Advanced model with expressiveness settings
 const advanceAudio = await audixa.generateTTS({
-  text: 'Hello from the Advance model!',
-  voice: 'am_ethan',
-  model: 'advance',
-  emotion: 'happy'
+  text: 'Hello from the Advanced model!',
+  voice_id: 'am_ethan',
+  model: 'advanced',
+  cfg_weight: 3.5,
+  exaggeration: 0.7
 });
 ```
 </CodeGroup>
@@ -140,7 +143,7 @@ const advanceAudio = await audixa.generateTTS({
     - Standard narration and content creation
     - Quick implementation without customization
   </Card>
-  <Card title="Choose Advance If..." icon="star">
+  <Card title="Choose Advanced If..." icon="star">
     - You need voice cloning capabilities
     - Creating a unique brand voice
     - Emotional and expressive content

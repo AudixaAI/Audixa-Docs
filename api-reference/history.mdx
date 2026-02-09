@@ -1,0 +1,151 @@
+---
+title: "History"
+api: "GET https://api.audixa.ai/v3/history"
+description: "List generation history"
+---
+
+Retrieve your TTS generation history in reverse chronological order (most recent first).
+
+```bash Endpoint
+GET https://api.audixa.ai/v3/history
+```
+
+## Request
+
+<ParamField query="limit" type="integer" default="20">
+  Maximum results to return (1-100).
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of results to skip.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter by status: `IN_QUEUE`, `GENERATING`, `COMPLETED`, `FAILED`, `EXPIRED`.
+</ParamField>
+
+## Response
+
+<ResponseField name="limit" type="integer">
+  Limit used for pagination.
+</ResponseField>
+
+<ResponseField name="offset" type="integer">
+  Offset used for pagination.
+</ResponseField>
+
+<ResponseField name="length" type="integer">
+  Number of results returned.
+</ResponseField>
+
+<ResponseField name="history" type="array">
+  List of generation objects.
+  
+  <Expandable title="History Item">
+    <ResponseField name="generation_id" type="string">
+      Unique generation ID.
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Generation status: `IN_QUEUE`, `GENERATING`, `COMPLETED`, `FAILED`, `EXPIRED`.
+    </ResponseField>
+    <ResponseField name="voice_id" type="string">
+      Voice ID used.
+    </ResponseField>
+    <ResponseField name="voice_name" type="string">
+      Human-readable voice name.
+    </ResponseField>
+    <ResponseField name="model" type="string">
+      TTS model used.
+    </ResponseField>
+    <ResponseField name="tokens" type="integer">
+      Number of tokens consumed.
+    </ResponseField>
+    <ResponseField name="dollar_cost" type="number">
+      Cost in USD.
+    </ResponseField>
+    <ResponseField name="method" type="string">
+      Payment method used: `API_WALLET` or `CREDITS_BALANCE`.
+    </ResponseField>
+    <ResponseField name="audio_url" type="string">
+      Download URL (if status is COMPLETED).
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      ISO 8601 creation timestamp.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.audixa.ai/v3/history?limit=10" \
+  -H "x-api-key: YOUR_API_KEY"
+```
+
+```python Python
+import audixa
+
+audixa.set_api_key("YOUR_API_KEY")
+
+history = audixa.history(limit=10)
+for item in history:
+    print(f"{item['generation_id']}: {item['status']}")
+```
+
+```javascript Node.js
+import Audixa from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+const { history } = await audixa.getHistory({ limit: 10 });
+history.forEach(item => {
+  console.log(`${item.generation_id}: ${item.status}`);
+});
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "limit": 10,
+  "offset": 0,
+  "length": 1,
+  "history": [
+    {
+      "generation_id": "gen_abc123",
+      "status": "COMPLETED",
+      "voice_id": "am_ethan",
+      "voice_name": "Ethan",
+      "model": "base",
+      "tokens": 25,
+      "dollar_cost": 0.000025,
+      "audio_url": "https://cdn.audixa.ai/audio/gen_abc123.mp3",
+      "created_at": "2025-02-05T12:00:00Z"
+    }
+  ]
+}
+```
+</ResponseExample>
+
+## Error Responses
+
+<Accordion title="401 Unauthorized">
+Missing or invalid API key.
+
+```json
+{
+  "detail": "Invalid or missing API key"
+}
+```
+</Accordion>
+
+<Accordion title="429 Too Many Requests">
+Rate limit exceeded.
+
+```json
+{
+  "detail": "Rate limit exceeded. Please retry after 30 seconds."
+}
+```
+</Accordion>

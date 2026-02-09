@@ -1,0 +1,117 @@
+---
+title: "Pricing"
+description: "Understanding Audixa's pay-as-you-go billing system"
+---
+
+Audixa uses a transparent pay-as-you-go billing system. Your cost depends on your subscription plan and the model you choose.
+
+## Plan-Based Pricing
+
+Lower-tier plans have valid Pay-as-you-go rates, while higher-tier plans unlock significantly cheaper rates for high-volume usage.
+
+| Plan | Monthly Price | Monthly Balance | Base Model Cost (per 1k chars) | Advanced Model Cost (per 1k chars) |
+|------|---------------|-----------------|--------------------------------|------------------------------------|
+| **Basic** | Free | $0.10 (Trial) | $0.001 | $0.08 |
+| **Starter** | $14 / month | $15 | $0.006 | $0.04 |
+| **Pro** | $29 / month | $30 | $0.003 | $0.02 |
+| **Enterprise** | Custom | Custom | Custom | Custom |
+
+<Note>
+  **Token Calculation:**
+  Costs are calculated based on the number of characters (tokens).
+  - **1,000 characters** (tokens) ≈ **1 minute** of generated audio.
+</Note>
+
+## How Costs Work
+
+Every API call has a cost based on:
+1. **Character Count** (Input text length)
+2. **Voice model** (Base or Advanced)
+3. **Your Plan** (Basic, Starter, or Pro rates)
+
+<Info>
+  New accounts receive **$0.10 in free balance** to get started on the Basic plan.
+</Info>
+
+## Cost Example
+
+<Tabs>
+  <Tab title="Basic Plan">
+    **Scenario:** Generate 10,000 characters using **Base Model**.
+    
+    **Calculation:** (10,000 / 1,000) * $0.001 = $0.01
+  </Tab>
+  <Tab title="Starter Plan">
+    **Scenario:** Generate 10,000 characters using **Advanced Model**.
+    
+    **Calculation:** (10,000 / 1,000) * $0.04 = $0.40
+  </Tab>
+</Tabs>
+
+## Checking Your Balance
+
+Your available balance (Monthly + Topup) is visible in the [Audixa Dashboard](https://audixa.ai/dashboard).
+
+<Warning>
+  Balance details are not exposed via the API. Use the dashboard to monitor your usage.
+</Warning>
+
+## Insufficient Balance
+
+When your balance runs out, API requests return a `402 Payment Required` error:
+
+<ResponseExample>
+```json 402 Payment Required
+{
+  "detail": "Insufficient Balance"
+}
+```
+</ResponseExample>
+
+### Handling This Error
+
+<CodeGroup>
+```python Python
+response = requests.post("https://api.audixa.ai/v3/tts", ...)
+
+if response.status_code == 402:
+    print("Insufficient balance. Please add funds at https://audixa.ai/dashboard/billing")
+```
+
+```javascript JavaScript
+if (response.status === 402) {
+  console.log("Insufficient balance. Please add funds.");
+  // Optionally redirect user to billing page
+}
+```
+</CodeGroup>
+
+## Adding Funds
+
+To add funds:
+
+1. Go to [Dashboard → Billing](https://audixa.ai/dashboard/billing)
+2. Choose a top-up amount or subscription
+3. Complete the payment
+
+<CardGroup cols={2}>
+  <Card title="Pay-As-You-Go" icon="credit-card">
+    Add funds as needed. Your topup balance never expires.
+  </Card>
+  <Card title="Subscription" icon="calendar">
+    Monthly plans with better rates, automatic balance refills, and volume discounts.
+  </Card>
+</CardGroup>
+
+## Usage Tracking
+
+The dashboard provides detailed usage analytics:
+
+- Daily/weekly/monthly spending
+- Usage by voice and model
+- API call history
+- Cost projections
+
+<Card title="View Usage Dashboard" icon="chart-line" href="https://audixa.ai/dashboard">
+  Track your spending and API usage patterns.
+</Card>

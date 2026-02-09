@@ -2,81 +2,70 @@
 title: "Text To Speech"
 ---
 
-This guide explains all the features and settings of the primary **Text-to-Speech** dashboard, allowing you to convert your text into natural-sounding speech.
-
-The dashboard provides a simple interface for basic generation and a powerful set of controls for advanced users.
+The **Text-to-Speech** dashboard allows you to convert text into natural-sounding speech using Audixa's state-of-the-art AI models.
 
 ## The Generation Workflow
 
-At its simplest, the workflow involves four steps:
-
-1. **Select Your Model:** Choose between the **Base Model** (for a wide variety of voices) or the **Advanced Model** (for cloning and fine-tuning).
-2. **Choose Your Voice:** Pick from our extensive library of preset voices or your own custom/cloned voices.
-3. **Enter Your Text:** Type or paste your script into the text box.
-4. **Click Generate:** Create your audio.
+1. **Select Your Model:** Choose between the **Base Model** for speed and reliability, or the **Advanced Model** for higher quality and expressiveness.
+2. **Choose Your Voice:** Pick from our extensive library of preset voices or use your own **Clone Voices**.
+3. **Enter Your Text:** Type or paste your script.
+4. **Settings (Optional):** Adjust speed, language, or advanced controls.
+5. **Generate:** Create your audio.
 
 ## Model Selection
 
-You can switch between two different models, each with its own voices and features.
+You can switch between two models depending on your needs:
 
-- **Base Model:** This is the best choice for the majority of applications. It gives you access to our largest library of high-quality preset voices and is optimized for reliability and speed.
-- **Advanced Model:** This model unlocks the **Advanced Model Settings** panel, allowing you to control emotion, creativity, and more. This model is also required for using any of your **Custom Voices** or **Instant Clones**.
+- **Base Model:** Best for general-purpose use. Optimized for speed and reliability.
+- **Advanced Model:** Offers HD voices and advanced expressiveness controls. Required for using **Clone Voices**.
 
-## Text Input
+## Quick Presets
 
-This is the main text area where you will write or paste your script.
-
----
-
-## Core Settings
-
-These settings are available for both Base and Advanced models.
-
-### Voice
-
-Clicking the **Select Voice** button opens the Voice Modal, where you can browse, search, and select from the entire voice library available to your plan. This includes all preset voices as well as any custom voices or clones you have created.
-
-### Speed
-
-This slider controls the playback speed of the generated speech.
-<ParamField path="Speed" type="int" required>
-  Speed of the generated speech
-</ParamField>
-
-- **Range:** 0.5x (half speed) to 2.0x (double speed).
-- **Default:** 1.0x (normal speed).
+To help you get started, we provide several one-click presets for common use cases:
+- **Casual Conversation**
+- **Professional Narration**
+- **Short Story**
+- **Announcement**
 
 ---
 
-## Advanced Model Settings
+## Settings
 
-These settings are **only visible and active when you select the Advanced Model**. They give you granular control over the vocal performance.
+### Voice Selection
+Click the voice selector to open the Voice Modal. You can filter by:
+- **Accent**
+- **Gender** (Male, Female, Neutral)
+- **Free Voices**
 
-| Setting         | Range      | Default   | Description                                                                                                                                                                                   |
-| :-------------- | :--------- | :-------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Emotion**     | Dropdown   | `Neutral` | Sets the emotional tone of the speech. Available emotions: **Neutral**, **Happy**, **Sad**, **Angry**, and **Surprised**.                                                                     |
-| **Temperature** | 0.7 - 1.0  | `0.9`     | This is the **Creativity Knob**. It controls randomness. Higher values lead to more emotional variety, while lower values result in more stable and predictable speech.                       |
-| **Top P**       | 0.7 - 0.98 | `0.9`     | This is a **Plausibility Filter**. It sets the range of likely tones the AI can use. Higher values allow for more diverse and creative speech, while lower values create more focused speech. |
+### Base Model Settings
+When the Base Model is selected, you can adjust:
+- **Language:** Select from available languages (e.g., American English).
+- **Speed:** Adjust playback speed from **0.5x** to **2.0x**.
+
+### Advanced Model Settings
+These settings provide granular control over the vocal performance and are only available with the Advanced Model.
+
+| Setting | Description |
+| :--- | :--- |
+| **CFG Weight** | Controls the guidance strength (1.0 - 5.0). Higher values force the model to follow the text and style more strictly. |
+| **Exaggeration** | Controls the expressiveness (0.0 - 1.0). Higher values result in more dramatic emotional fluctuation. |
+
+### Output Format
+Choose your preferred file format:
+- **MP3:** Compressed, smaller file size (standard).
+- **WAV:** Uncompressed, lossless quality.
 
 ---
 
 ## Generating & Playing Audio
 
-After you click the **Generate Speech** button, the waveform player will appear once the audio is ready.
-
-This player allows you to:
-
-- **Play / Pause:** Listen to your generated audio.
-- **Download:** Save the audio file (as an MP3) directly to your computer.
-- **View Duration:** See the total length of the generated audio clip.
-
----
+Once generated, the audio player appears at the bottom.
+- **Waveform:** Visual representation of the audio.
+- **Play/Pause/Download:** Standard controls.
+- **History:** Your recent generations appear in the sidebar list.
 
 ## Automate with the API
 
-While the dashboard is perfect for testing voices and generating individual clips, you can automate your entire audio workflow using the Audixa AI API. This allows you to integrate TTS directly into your applications, websites, or content creation pipelines.
-
-To get started with programmatic generation, please see our **API Reference**:
-
-- [**API Introduction:**](/api-reference/introduction) Learn about authentication and the core asynchronous workflow.
-- [**Generate Speech (POST /tts):**](/api-reference/tts) Get the full technical details for submitting generation tasks programmatically.
+You can automate this entire workflow using our API.
+- [**API Introduction**](/api-reference/introduction)
+- [**Generate Speech Route**](/api-reference/tts)

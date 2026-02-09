@@ -1,68 +1,51 @@
 ---
-title: "Custom Voices"
+title: "Clone Voices"
 description: "Create reusable synthetic voices for your brand or application"
 ---
 
-**Custom Voices** let you create a **reusable** synthetic voice that's saved to your account. Once created, you can use this voice repeatedly — both in the dashboard and via the API — making it perfect for branding and consistent audio experiences.
+**Clone Voices** (also known as Custom Voices) allow you to train a personal voice model that you can use across all your projects. Once created, you can generate speech with this voice repeatedly using the **Advanced Model**.
 
 <Note>
-  Custom voices are saved to your account with a unique Voice ID for unlimited reuse. For one-time voice cloning, see [Instant Voice Cloning](/features/voice-cloning).
+  Clone Voices result in a unique Voice ID saved to your account.
 </Note>
 
-## Custom Voices vs Instant Cloning
-
-| Feature | Custom Voices | Instant Cloning |
-|---------|---------------|-----------------|
-| **Voice Saved?** | ✅ Yes | ❌ No |
-| **Reusable?** | ✅ Unlimited uses | ❌ Single use |
-| **Voice ID Assigned?** | ✅ Yes | ❌ No |
-| **API Access** | ✅ Yes | ❌ Dashboard only |
-| **Best For** | Branding, ongoing use | Quick tests, one-off projects |
-
-## How to Create a Custom Voice
+## How to Create a Voice
 
 <Steps>
-  <Step title="Navigate to the Dashboard">
-    Log in to your account and go to the [Custom Voices page](https://audixa.ai/dashboard/custom).
+  <Step title="Navigate to Clone Voices">
+    Log in to your account and go to the [Clone Voices page](https://audixa.ai/app/custom-voices).
   </Step>
-  <Step title="Upload Audio">
-    Provide a high-quality audio sample of the voice you want to use as a base.
+  <Step title="Provide Audio Source">
+    You can provide audio in two ways:
+    - **Upload File:** Upload an MP3 or WAV file (Max 10MB).
+    - **Record Audio:** Record a 10-second sample directly in the browser.
   </Step>
-  <Step title="Define Your Voice">
-    Assign a **Name** and **Gender** to your new voice for easy identification.
+  <Step title="Define Voice Details">
+    - **Voice Name:** Give your voice a recognizable name.
+    - **Gender:** Select Male, Female, or Neutral.
+    - **Description:** Optional notes about the voice characteristics.
   </Step>
-  <Step title="Get Your Voice ID">
-    Once processed, your new Custom Voice will be added to your library and assigned a unique Voice ID.
+  <Step title="Create">
+    Confirm you have the rights to use the voice and click **Create Voice**.
   </Step>
 </Steps>
 
-<Note>
-  Creating custom voices is only available via the Dashboard as of now. We are working to add the API endpoint for it.
-</Note>
+## Using Your Clone Voice on the Dashboard
 
-## Using Your Custom Voice on the Dashboard
+1. Go to the [Text to Speech](https://audixa.ai/app/text-to-speech) page.
+2. Select the **Advanced Model** (v2).
+3. Open the Voice Selector.
+4. Your created voices will appear under the **"Your Voices"** or **"Custom"** section.
 
-To use your custom voice via the Web Dashboard:
+## Using Your Clone Voice in the API
 
-1. Head to the [Text to Speech Page](https://audixa.ai/dashboard/tts)
-2. Select **Advance Model**
-3. In the Voices menu, find your Custom Voice under "My Voices"
+You can use your cloned voice programmatically by referencing its unique `voice_id`.
 
-<Note>
-  Custom voices are only supported in the **Advance Model**.
-</Note>
+### 1. Find Your Voice ID
+In the [Clone Voices dashboard](https://audixa.ai/app/custom-voices), find your voice in the "Your Voices" grid. You can copy the Voice ID from there (if available) or use the API to list your voices.
 
-## Using Your Custom Voice in the API
-
-Your Custom Voice can be used programmatically via the API by referencing its unique Voice ID.
-
-### Find Your Voice ID
-
-Locate your voice on the dashboard's Custom Voices section and copy its Voice ID (e.g., `custom_voice_123`).
-
-### Make the API Request
-
-Set the `voice` parameter to your Voice ID and the `model` parameter to `"advance"`.
+### 2. Make the API Request
+Set the `voice` parameter to your Voice ID and the `model` parameter to `advanced`.
 
 <CodeGroup>
 ```python Python
@@ -71,77 +54,39 @@ import audixa
 audixa.set_api_key("YOUR_API_KEY")
 
 audio_url = audixa.tts_and_wait(
-    "This audio was generated with our unique and professional brand voice.",
-    voice="custom_voice_456",
-    model="advance",
+    "This is my custom cloned voice.",
+    voice="custom_voice_12345",
+    model="advanced", # Required for custom voices
     speed=1.0,
 )
 ```
 
-```typescript TypeScript
-import Audixa from 'audixa';
-
-const audixa = new Audixa('YOUR_API_KEY');
-
-const audioUrl = await audixa.generateTTS({
-  text: 'This audio was generated with our unique and professional brand voice.',
-  voice: 'custom_voice_456',
-  model: 'advance',
-  speed: 1.0
-});
-```
-
 ```bash cURL
-curl -X POST "https://api.audixa.ai/v2/tts" \
+curl -X POST "https://api.audixa.ai/v3/tts" \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{
-    "text": "This audio was generated with our unique and professional brand voice.",
-    "voice": "custom_voice_456",
-    "model": "advance",
+    "text": "This is my custom cloned voice.",
+    "voice": "custom_voice_12345",
+    "model": "advanced",
     "speed": 1.0
   }'
 ```
 </CodeGroup>
 
-## Security and Access
-
-Your Custom Voices are **exclusive to your account**.
-
-<CardGroup cols={2}>
-  <Card title="Exclusive Access" icon="lock">
-    Only the account that created a Custom Voice can use its Voice ID.
-  </Card>
-  <Card title="Protected Assets" icon="shield">
-    If another user attempts to use your Custom Voice ID, the API returns a `400 Bad Request` error.
-  </Card>
-</CardGroup>
-
-**Error on Misuse:**
-
-```json
-{
-  "detail": "Invalid voice ID"
-}
-```
-
 ## Billing
 
-Custom Voices use the **Advance Model**. All audio generated is charged at the Advance model rate.
+Clone Voices utilize the **Advanced Model**.
 
-| Model | Credit Cost |
+| Model | Cost |
 |-------|-------------|
-| Base | 1 credit per token |
-| **Advance (Custom Voices)** | 4 credits per token |
+| **Advanced** | 4 credits per token |
 
 <Card title="Understanding Credits" icon="coins" href="/guides/pricing-credits">
-  See our detailed guide on credit calculation and billing.
+  See our detailed guide on credit calculation.
 </Card>
 
 ## Managing Your Voices
 
-You have full control over your created voices. Management tasks, such as deleting a Custom Voice, can only be performed through the [Custom Voices section](https://audixa.ai/dashboard/custom) of your dashboard.
-
-<Warning>
-  Changing of the voice or metadata for a custom voice after creation is not allowed.
-</Warning>
+You can delete voices you no longer need from the [Clone Voices dashboard](https://audixa.ai/app/custom-voices).
+**Note:** Deletion is permanent and cannot be undone.

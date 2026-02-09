@@ -21,11 +21,11 @@ Fetch available voices using the `/voices` endpoint:
 <CodeGroup>
 ```bash cURL
 # Get Base model voices
-curl -X GET "https://api.audixa.ai/v2/voices?model=base" \
+curl -X GET "https://api.audixa.ai/v3/voices?model=base" \
   -H "x-api-key: YOUR_API_KEY"
 
-# Get Advance model voices
-curl -X GET "https://api.audixa.ai/v2/voices?model=advance" \
+# Get Advanced model voices
+curl -X GET "https://api.audixa.ai/v3/voices?model=advanced" \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
@@ -34,31 +34,31 @@ import requests
 
 # Get Base model voices
 response = requests.get(
-    "https://api.audixa.ai/v2/voices",
+    "https://api.audixa.ai/v3/voices",
     params={"model": "base"},
     headers={"x-api-key": "YOUR_API_KEY"}
 )
 
 voices = response.json()["voices"]
 for voice in voices:
-    print(f"{voice['name']} ({voice['voice_id']}) - {voice['accent']}")
+    print(f"{voice['name']} ({voice['voice_id']}) - {voice.get('accent', 'N/A')}")
 ```
 
 ```javascript JavaScript
 const response = await fetch(
-  "https://api.audixa.ai/v2/voices?model=base",
+  "https://api.audixa.ai/v3/voices?model=base",
   { headers: { "x-api-key": "YOUR_API_KEY" } }
 );
 
 const data = await response.json();
 data.voices.forEach(voice => {
-  console.log(`${voice.name} (${voice.voice_id}) - ${voice.accent}`);
+  console.log(`${voice.name} (${voice.voice_id}) - ${voice.accent || 'N/A'}`);
 });
 ```
 </CodeGroup>
 
 <Note>
-  The `model` query parameter is **required**. Use `base` or `advance`.
+  The `model` query parameter is optional. Use `base` or `advanced` to filter.
 </Note>
 
 ## Response Format
@@ -66,11 +66,12 @@ data.voices.forEach(voice => {
 <ResponseExample>
 ```json Voice List Response
 {
-  "user_id": "user_123",
-  "model": "base",
+  "limit": 100,
+  "offset": 0,
+  "length": 3,
   "voices": [
     {
-      "voice_id": "aura-asteria-en",
+      "voice_id": "am_ethan",
       "name": "Asteria",
       "gender": "female",
       "accent": "American English",
@@ -114,7 +115,7 @@ Once you've selected a voice, use its `voice_id` in your TTS request:
 ```json
 {
   "text": "Hello, this is a test.",
-  "voice": "aura-asteria-en",
+  "voice_id": "am_ethan",
   "model": "base"
 }
 ```
@@ -123,26 +124,26 @@ Once you've selected a voice, use its `voice_id` in your TTS request:
   Make sure the `model` in your TTS request matches the model the voice belongs to.
 </Warning>
 
-## Custom Voices (Advance Model)
+## Custom Voices (Advanced Model)
 
-With the **Advance** model, you can:
+With the **Advanced** model, you can:
 
 <CardGroup cols={2}>
   <Card title="Clone Your Voice" icon="clone">
     Create a custom voice from audio samples.
   </Card>
   <Card title="Adjust Emotions" icon="face-smile">
-    Control emotional tone: neutral, happy, sad, angry, surprised.
+    Control emotional tone via `exaggeration` and `cfg_weight`.
   </Card>
   <Card title="Fine-tune Settings" icon="sliders">
-    Adjust temperature and top-p for creativity control.
+    Adjust expressiveness for creativity control.
   </Card>
   <Card title="Branded Voices" icon="building">
     Create unique voices for your brand.
   </Card>
 </CardGroup>
 
-Custom voices appear in your `/voices?model=advance` response with a `custom: true` flag.
+Custom voices appear in your `/voices?model=advanced` response with a `custom: true` flag.
 
 ## Voice Selection Tips
 

@@ -1,0 +1,158 @@
+---
+title: "Real-time Streaming"
+api: "WS https://api.audixa.ai/v3/tts/stream"
+description: "Stream audio in real-time via WebSocket"
+---
+
+Audixa provides a WebSocket endpoint for real-time text-to-speech streaming, allowing you to play audio as it is being generated.
+
+<Note>
+Compatible with `wav` and `mp3` output formats.
+</Note>
+
+## Connection
+
+```bash Endpoint
+wss://api.audixa.ai/v3/tts/stream
+```
+
+### Authentication
+Pass your API key as a query parameter:
+
+```bash
+wss://api.audixa.ai/v3/tts/stream?api_key=YOUR_API_KEY
+```
+
+## Protocol
+
+### 1. Send Request
+Once connected, send a JSON payload with your generation details:
+
+```json
+{
+  "text": "Hello, world! This is a streaming test.",  // Required
+  "voice_id": "am_ethan",                               // Required
+  "model": "base",                                  // Optional, default: "base"
+  "speed": 1.0,                                     // Optional, default: 1.0
+  "audio_format": "wav",                            // Optional: "wav" or "mp3"
+  "cfg_weight": 2.5,                                // Optional: Advanced model only
+  "exaggeration": 0.5                               // Optional: Advanced model only
+}
+```
+
+### 2. Receive Messages
+The server will send a mix of JSON control messages and binary audio data.
+
+**A. Started Message (JSON)**
+Sent when processing begins.
+```json
+{
+  "type": "started",
+  "generation_id": "gen_abc123",
+  "channel": "generation:gen_abc123"
+}
+```
+
+**B. Audio Chunks (Binary)**
+Raw binary audio data (PCM/WAV chunks) will stream immediately after the "started" message. Append these chunks to your audio buffer.
+
+**C. Completion (JSON)**
+Sent when the stream ends.
+```json
+{
+  "type": "completed",
+  "audio_url": "https://cdn.audixa.ai/..." // Backup complete file URL
+}
+```
+
+**D. Error (JSON)**
+```json
+{
+  "type": "error",
+  "message": "Invalid API Key"
+}
+```
+
+## Example (Python)
+
+```python Python
+import websockets
+import json
+import asyncio
+
+async def stream_tts():
+    uri = "wss://api.audixa.ai/v3/tts/stream?api_key=YOUR_KEY"
+    async with websockets.connect(uri) as websocket:
+        # Send Request
+        await websocket.send(json.dumps({
+            "text": "Hello from the stream!",
+            "voice_id": "am_ethan",
+            "model": "base"
+        }))
+        
+        # Listen
+        while True:
+            msg = await websocket.recv()
+            if isinstance(msg, str):
+                data = json.loads(msg)
+                if data["type"] == "started":
+                    print("Stream started!")
+                elif data["type"] == "completed":
+                    print("Stream finished!")
+                    break
+                elif data["type"] == "error":
+                    print(f"Error: {data['message']}")
+                    break
+            else:
+                # Binary audio chunk
+                # write_to_audio_sink(msg)
+                print(f"Received {len(msg)} bytes of audio")
+
+asyncio.run(stream_tts())
+```
+
+```javascript JavaScript
+const WebSocket = require('ws');
+// For browser, use window.WebSocket
+
+const ws = new WebSocket('wss://api.audixa.ai/v3/tts/stream?api_key=YOUR_KEY');
+
+ws.on('open', () => {
+    ws.send(JSON.stringify({
+        text: "Hello from the stream!",
+        voice_id: "am_ethan",
+        model: "base"
+    }));
+});
+
+ws.on('message', (data, isBinary) => {
+    if (isBinary) {
+        // Handle audio data (e.g. append to buffer)
+        console.log(`Received ${data.length} bytes of audio`);
+    } else {
+        const msg = JSON.parse(data.toString());
+        if (msg.type === 'started') {
+            console.log('Stream started');
+        } else if (msg.type === 'completed') {
+            console.log('Stream finished');
+            ws.close();
+        } else if (msg.type === 'error') {
+            console.error('Error:', msg.message);
+        }
+    }
+});
+```
+
+## WebSocket Close Codes
+
+<Accordion title="1003 Invalid Payload">
+The server received data it cannot accept (e.g., malformed JSON, missing fields, or validation errors).
+</Accordion>
+
+<Accordion title="1008 Policy Violation">
+Authentication failed (e.g., invalid or missing API key).
+</Accordion>
+
+<Accordion title="1011 Internal Error">
+An unexpected condition prevented the server from fulfilling the request (e.g., database or Redis connection failure).
+</Accordion>

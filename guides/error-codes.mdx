@@ -42,7 +42,7 @@ Some errors may include additional context:
 |------|--------|-------------|
 | `400` | Bad Request | Invalid request parameters |
 | `401` | Unauthorized | Missing or invalid API key |
-| `402` | Payment Required | Insufficient credits |
+| `402` | Payment Required | Insufficient balance |
 | `404` | Not Found | Resource not found (e.g., invalid generation_id) |
 | `422` | Unprocessable Entity | Validation error |
 | `429` | Too Many Requests | Rate limit exceeded |
@@ -53,6 +53,14 @@ Some errors may include additional context:
 |------|--------|-------------|
 | `500` | Internal Server Error | Unexpected server error |
 | `503` | Service Unavailable | Service temporarily unavailable |
+
+### WebSocket Close Codes
+
+| Code | Description |
+|------|-------------|
+| `1003` | **Invalid Payload**: The server received data it cannot accept (e.g., malformed JSON). |
+| `1008` | **Policy Violation**: Authentication failed (e.g., invalid API key). |
+| `1011` | **Internal Error**: Unexpected server condition (e.g., Redis failure). |
 
 ## Common Errors
 
@@ -66,7 +74,7 @@ Returned when request parameters are missing or invalid.
   "detail": "Validation error",
   "errors": [
     {"field": "text", "message": "Text is required"},
-    {"field": "model", "message": "Model must be 'base' or 'advance'"}
+    {"field": "model", "message": "Model must be 'base' or 'advanced'"}
   ]
 }
 ```
@@ -74,7 +82,7 @@ Returned when request parameters are missing or invalid.
 
 **Common causes:**
 - Missing required fields (`text`, `voice`, `model`)
-- Invalid `model` value (must be `base` or `advance`)
+- Invalid `model` value (must be `base` or `advanced`)
 - Text exceeds maximum length
 
 ---
@@ -99,7 +107,7 @@ Returned when authentication fails.
 
 ### 402 Payment Required
 
-Returned when your account has insufficient credits.
+Returned when your account has insufficient balance.
 
 <ResponseExample>
 ```json 402 Payment Required
@@ -109,7 +117,7 @@ Returned when your account has insufficient credits.
 ```
 </ResponseExample>
 
-**Solution:** Add credits via the [Billing Dashboard](https://audixa.ai/dashboard/billing).
+**Solution:** Add funds via the [Billing Dashboard](https://audixa.ai/dashboard/billing).
 
 ---
 
@@ -168,9 +176,9 @@ Returned when an unexpected server error occurs.
 import requests
 
 response = requests.post(
-    "https://api.audixa.ai/v2/tts",
+    "https://api.audixa.ai/v3/tts",
     headers={"x-api-key": "YOUR_API_KEY"},
-    json={"text": "Hello", "voice": "aura-asteria-en", "model": "base"}
+    json={"text": "Hello", "voice_id": "am_ethan", "model": "base"}
 )
 
 if response.status_code == 201:
@@ -178,7 +186,7 @@ if response.status_code == 201:
 elif response.status_code == 401:
     print("Authentication failed. Check your API key.")
 elif response.status_code == 402:
-    print("Insufficient credits. Please add funds.")
+    print("Insufficient balance. Please add funds.")
 elif response.status_code == 429:
     print("Rate limited. Retry later.")
 else:
@@ -186,7 +194,7 @@ else:
 ```
 
 ```javascript JavaScript
-const response = await fetch("https://api.audixa.ai/v2/tts", {
+const response = await fetch("https://api.audixa.ai/v3/tts", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -194,7 +202,7 @@ const response = await fetch("https://api.audixa.ai/v2/tts", {
   },
   body: JSON.stringify({
     text: "Hello",
-    voice: "aura-asteria-en",
+    voice_id: "aura-asteria-en",
     model: "base"
   })
 });
@@ -204,7 +212,7 @@ if (response.status === 201) {
 } else if (response.status === 401) {
   console.log("Authentication failed. Check your API key.");
 } else if (response.status === 402) {
-  console.log("Insufficient credits. Please add funds.");
+  console.log("Insufficient balance. Please add funds.");
 } else if (response.status === 429) {
   console.log("Rate limited. Retry later.");
 } else {

@@ -1,0 +1,175 @@
+---
+title: "Get Generation"
+api: "GET https://api.audixa.ai/v3/tts"
+description: "Retrieve the status and details of a TTS generation"
+---
+
+Poll this endpoint to check if your generation is complete. When `status` is `COMPLETED`, the `audio_url` field will contain the download link.
+
+```bash Endpoint
+GET https://api.audixa.ai/v3/tts
+```
+
+## Request
+
+<ParamField query="generation_id" type="string" required>
+  The generation ID returned from [POST /tts](/api-reference/tts).
+</ParamField>
+
+## Response
+
+<ResponseField name="generation_id" type="string">
+  Unique identifier for the generation.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current status: `IN_QUEUE`, `GENERATING`, `COMPLETED`, `FAILED`.
+</ResponseField>
+
+<ResponseField name="input_text" type="string">
+  The input text that was submitted.
+</ResponseField>
+
+<ResponseField name="voice_id" type="string">
+  Voice ID used.
+</ResponseField>
+
+<ResponseField name="voice_name" type="string">
+  Human-readable voice name.
+</ResponseField>
+
+<ResponseField name="model" type="string">
+  Model used: `base` or `advanced`.
+</ResponseField>
+
+<ResponseField name="tokens" type="integer">
+  Number of tokens consumed.
+</ResponseField>
+
+<ResponseField name="dollar_cost" type="number">
+  Final cost in USD.
+</ResponseField>
+
+<ResponseField name="method" type="string">
+  Payment source: `CREDITS_BALANCE` (Monthly) or `API_WALLET` (Topup).
+</ResponseField>
+
+<ResponseField name="audio_url" type="string">
+  Download URL for the audio file (only when status is `COMPLETED`).
+</ResponseField>
+
+<ResponseField name="error_message" type="string">
+  Error details if status is `FAILED`.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 creation timestamp.
+</ResponseField>
+
+<ResponseField name="started_at" type="string">
+  ISO 8601 timestamp when processing started.
+</ResponseField>
+
+<ResponseField name="completed_at" type="string">
+  ISO 8601 timestamp when processing completed.
+</ResponseField>
+
+
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.audixa.ai/v3/tts?generation_id=gen_abc123" \
+  -H "x-api-key: YOUR_API_KEY"
+```
+
+```python Python
+import audixa
+
+audixa.set_api_key("YOUR_API_KEY")
+
+status = audixa.status("gen_abc123")
+print(f"Status: {status['status']}")
+```
+
+```javascript Node.js
+import Audixa from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+const status = await audixa.getStatus('gen_abc123');
+console.log('Status:', status.status);
+```
+</RequestExample>
+
+<ResponseExample>
+```json Response
+{
+  "generation_id": "gen_abc123",
+  "status": "COMPLETED",
+  "input_text": "Hello world",
+  "voice_id": "am_ethan",
+  "voice_name": "Ethan",
+  "model": "base",
+  "tokens": 12,
+  "dollar_cost": 0.000012,
+  "method": "API_WALLET",
+  "audio_url": "https://cdn.audixa.ai/audio/gen_abc123.mp3",
+  "created_at": "2024-03-20T10:00:00Z",
+  "started_at": "2024-03-20T10:00:01Z",
+  "completed_at": "2024-03-20T10:00:02Z"
+}
+```
+</ResponseExample>
+
+## Polling Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Poll Interval" icon="clock">
+    Poll every 1-2 seconds. Don't poll faster than once per second.
+  </Card>
+  <Card title="Timeout" icon="hourglass">
+    Set a maximum timeout (e.g., 60 seconds) to avoid infinite loops.
+  </Card>
+  <Card title="Error Handling" icon="triangle-exclamation">
+    Always handle the `Failed` status gracefully with retry logic.
+  </Card>
+  <Card title="Cache Results" icon="database">
+    Once completed, cache the `url` to avoid re-polling.
+  </Card>
+</CardGroup>
+
+## Error Responses
+
+<Accordion title="401 Unauthorized">
+Missing or invalid API key.
+
+```json
+{
+  "detail": "Invalid or missing API key"
+}
+```
+</Accordion>
+
+<Accordion title="404 Not Found">
+Invalid or expired generation ID.
+
+```json
+{
+  "detail": "Generation not found"
+}
+```
+
+<Note>
+  Generation IDs expire 24 hours after creation.
+</Note>
+</Accordion>
+
+<Accordion title="429 Too Many Requests">
+Rate limit exceeded.
+
+```json
+{
+  "detail": "Rate limit exceeded. Please retry after 30 seconds."
+}
+```
+</Accordion>

@@ -3,90 +3,66 @@ title: "Billing"
 description: "Manage your plan, add funds, and view invoice history"
 ---
 
-The Billing & Subscription page is your central hub to manage your plan, add funds to your wallet, and view your complete invoice history.
+The Billing page is your central hub for managing your subscription, wallet balances, and viewing transaction history.
 
-## Subscription Details
+## The Billing Dashboard
 
-This section shows the current status of your monthly or annual subscription. What you see here depends on whether you are on the free (Basic) plan or a paid plan.
+The dashboard uses a grid layout to show your most important financial data at a glance.
 
-<Tabs>
-  <Tab title="Paid Plans">
-    If you are on a **Starter** or **Pro** plan, this card will show:
-    - Your active plan name
-    - The next renewal date
-    - Your monthly usage percentage
-    - The payment method on file
-  </Tab>
-  <Tab title="Basic Plan">
-    If you are on the Basic plan, this card will show "No Active Subscription" and provide an **Upgrade Now** button to select a paid plan.
-  </Tab>
-</Tabs>
+### 1. Total Available Balance
+The large card shows your **Total Available Balance**, which is the sum of your:
+- **Monthly Balance:** Included with your plan (resets monthly).
+- **Topup Balance:** Purchased separately (never expires).
+
+### 2. Add Funds (Topup)
+You can add funds to your **Topup Balance** at any time. This balance is used when your monthly balance runs out, ensuring uninterrupted service.
+
+- **Pre-set Amounts:** $10, $25, $50, $100.
+- **Custom Amount:** Enter any amount between $10 and $1,000.
+- **Payment:** Securely processed via our payment provider.
+
+### 3. Active Plan Card
+Shows your current subscription tier and its benefits, such as:
+- Monthly balance amount
+- Concurrent request limits
+- Feature access (e.g., Clone Voices)
 
 ## Managing Your Subscription
-
-For paid plans, this section contains a **Manage Subscription** button. This button securely redirects you to our external payment provider's customer portal.
-
-Inside this portal, you can:
-
-- Update or change your payment method (credit card)
-- Cancel your subscription
-- View and download all past invoices
-
-<Card title="Manage Subscription" icon="credit-card" href="https://audixa.ai/dashboard/billing">
-  Go to your billing page to manage your subscription.
-</Card>
-
-## API Wallet Balance
-
-The API Wallet is a separate, pay-as-you-go balance that you can add funds to at any time. Its primary purpose is to cover any overages on the Pro plan.
-
-### Pro Plan Overage
+Click the **Manage Subscription** button on your active plan card to open the subscription portal. Here you can:
+- **Upgrade/Downgrade:** Change your plan.
+- **Update Payment Method:** Change your card details.
+- **Cancel Subscription:** Stop auto-renewal.
+- **View Invoices:** Download past PDF invoices.
 
 <Note>
-  Additional (pay-as-you-go) usage is an exclusive feature of the **Pro plan**. If you are on the Basic or Starter plan, your API access will be paused once you exhaust your monthly credits.
+  If you cancel, you will see a cancellation banner with the end date. You can revoke cancellation at any time before that date to keep your plan active.
 </Note>
 
-Pro plan users can continue generating audio uninterrupted, and any usage beyond their plan's limit will be deducted from their API Wallet balance.
+## Wallet System Explained
 
-### How to Add Balance
-
-<Steps>
-  <Step title="Click Add Balance">
-    Click the **Add Balance** button on your billing page.
-  </Step>
-  <Step title="Enter Amount">
-    A dialog will appear prompting you to enter an amount in USD.
-    
-    <Warning>
-      The amount must be a whole number (integer) and the minimum deposit is **$10**.
-    </Warning>
-  </Step>
-  <Step title="Complete Payment">
-    Clicking "Proceed" will take you to a secure payment page to complete the transaction. The funds will appear in your wallet shortly after.
-  </Step>
-</Steps>
+Audixa uses a **Dual Wallet System**:
+1. **Monthly Balance:** Consumed first. Resets on your billing cycle. Unused amounts do NOT roll over.
+2. **Topup Balance:** Consumed only after Monthly Balance is exhausted. Carries over indefinitely.
 
 ## Billing History
+The bottom section contains tabs for:
+- **Payments:** History of your subscription charges and top-ups.
+- **Generations:** Detailed log of balance usage per generation.
 
-This section shows a list of your most recent invoices and payments. For a complete history, click the **View More** button.
-
-Similar to the "Manage Subscription" button, this will redirect you to your secure customer portal, where you can see and download every invoice on your account.
-
-## Support
-
-The support section changes based on your plan:
+## Plan & Support Levels
 
 | Plan | Support Level |
-|------|---------------|
-| **Pro, Enterprise** | Priority Support - Direct access to priority support team |
-| **Starter** | Standard Support - Access to support with faster response times |
-| **Basic** | General Support - Standard support queue |
+| :--- | :--- |
+| **Basic** | Community Support |
+| **Starter** | Community Support |
+| **Pro** | **Priority Support** |
+| **Enterprise** | **Priority Support + Dedicated Manager** |
 
 <CardGroup cols={2}>
-  <Card title="Upgrade Your Plan" icon="arrow-up" href="https://audixa.ai/pricing">
-    Get access to more credits and priority support.
+  <Card title="Upgrade Plan" icon="arrow-up" href="https://audixa.ai/pricing">
+     Unlock lower rates and priority support.
   </Card>
   <Card title="Contact Support" icon="headset" href="mailto:support@audixa.ai">
-    Reach out to our support team.
+    Reach out to our team.
   </Card>
 </CardGroup>

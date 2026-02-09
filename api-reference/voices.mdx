@@ -1,67 +1,79 @@
 ---
-title: "GET /voices"
-api: "GET https://api.audixa.ai/v2/voices"
-description: "List available voices for a model"
+title: "List Voices"
+api: "GET https://api.audixa.ai/v3/voices"
+description: "List available voices for TTS generation"
 ---
 
-Retrieves the catalog of available voices for the specified model. Use the returned `voice_id` values in your [/tts](/api-reference/tts) requests.
+Retrieves a paginated list of available voices. Returns both system voices and your custom voices (if any).
+
+```bash Endpoint
+GET https://api.audixa.ai/v3/voices
+```
 
 ## Request
 
-<ParamField query="model" type="string" required>
-  The model tier to list voices for. Must be `base` or `advance`.
+<ParamField query="model" type="string">
+  Filter by model compatibility. `base` or `advanced`.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="100">
+  Maximum results to return (1-500).
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of results to skip.
 </ParamField>
 
 ## Response
 
-<ResponseField name="user_id" type="string">
-  Your user ID.
+<ResponseField name="limit" type="integer">
+  Limit used for pagination.
 </ResponseField>
 
-<ResponseField name="model" type="string">
-  The model tier that was queried.
+<ResponseField name="offset" type="integer">
+  Offset used for pagination.
+</ResponseField>
+
+<ResponseField name="length" type="integer">
+  Number of voices returned in this page.
 </ResponseField>
 
 <ResponseField name="voices" type="array">
-  Array of available voice objects.
-
-  <Expandable title="Voice object properties">
+  List of voice objects.
+  
+  <Expandable title="Voice Object">
     <ResponseField name="voice_id" type="string">
       Unique identifier to use in `/tts` requests.
     </ResponseField>
-    
     <ResponseField name="name" type="string">
-      Human-friendly voice name.
+      Human-readable name.
     </ResponseField>
-    
+    <ResponseField name="model" type="string">
+      Compatible model: `base` or `advanced`.
+    </ResponseField>
     <ResponseField name="gender" type="string">
-      Voice gender: `male` or `female`.
+      `Male`, `Female`, or `Neutral`.
     </ResponseField>
-    
     <ResponseField name="accent" type="string">
-      Voice accent/language (e.g., "American English", "British English").
+      Voice accent (e.g., `American`, `British`, `Australian`).
     </ResponseField>
-    
     <ResponseField name="description" type="string">
-      Brief description of voice characteristics.
+      Brief description of the voice characteristics.
     </ResponseField>
-    
-    <ResponseField name="custom" type="boolean">
-      Whether this is a custom/cloned voice (Advance model only).
+    <ResponseField name="is_custom" type="boolean">
+      `true` if this is a custom voice created by you.
+    </ResponseField>
+    <ResponseField name="free" type="boolean">
+      `true` if the voice is free to use (standard voices).
     </ResponseField>
   </Expandable>
 </ResponseField>
 
-## Examples
+
 
 <RequestExample>
 ```bash cURL
-# List Base model voices
-curl -X GET "https://api.audixa.ai/v2/voices?model=base" \
-  -H "x-api-key: YOUR_API_KEY"
-
-# List Advance model voices
-curl -X GET "https://api.audixa.ai/v2/voices?model=advance" \
+curl -X GET "https://api.audixa.ai/v3/voices?model=base&limit=50" \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
@@ -70,136 +82,58 @@ import audixa
 
 audixa.set_api_key("YOUR_API_KEY")
 
-# Get available voices
-voices = audixa.list_voices()
-print(f"Found {len(voices)} voices\n")
-
+voices = audixa.list_voices(model="base", limit=50)
 for voice in voices:
-    print(f"ID: {voice['id']}")
-    print(f"Name: {voice['name']}")
-    print("---")
-
+    print(f"{voice['name']} ({voice['voice_id']})")
 ```
 
-```javascript JavaScript
+```javascript Node.js
 import Audixa from 'audixa';
 
 const audixa = new Audixa('YOUR_API_KEY');
 
-// Get available voices for base model
-const { voices } = await audixa.getVoices('base');
-
-console.log(`Found ${voices.length} voices\n`);
+const { voices } = await audixa.getVoices({ 
+  model: 'base', 
+  limit: 50 
+});
 
 voices.forEach(voice => {
-  console.log(`ID: ${voice.voice_id}`);
-  console.log(`Name: ${voice.name}`);
-  console.log(`Gender: ${voice.gender}`);
-  console.log('---');
+  console.log(`${voice.name} (${voice.voice_id})`);
 });
-```
-
-```typescript TypeScript
-import Audixa, { Voice, GetVoicesResponse } from 'audixa';
-
-const audixa = new Audixa(process.env.AUDIXA_API_KEY!);
-
-const { voices }: GetVoicesResponse = await audixa.getVoices('base');
-
-// Find a specific voice
-const ethan: Voice | undefined = voices.find(v => v.name === 'Ethan');
-
-if (ethan) {
-  console.log(`Found voice: ${ethan.voice_id}`);
-}
 ```
 </RequestExample>
 
 <ResponseExample>
 ```json 200 OK
 {
-  "user_id": "user_123abc",
-  "model": "base",
+  "limit": 50,
+  "offset": 0,
+  "length": 2,
   "voices": [
     {
-      "voice_id": "aura-asteria-en",
-      "name": "Asteria",
-      "gender": "female",
-      "accent": "American English",
-      "description": "Clear, professional female voice"
+      "voice_id": "am_ethan",
+      "name": "Ethan",
+      "model": "base",
+      "gender": "Male",
+      "accent": "American",
+      "description": "Clear professional voice",
+      "free": true,
+      "is_custom": false
     },
     {
-      "voice_id": "aura-orion-en",
-      "name": "Orion",
-      "gender": "male",
-      "accent": "American English",
-      "description": "Deep, authoritative male voice"
-    },
-    {
-      "voice_id": "aura-luna-en",
-      "name": "Luna",
-      "gender": "female",
-      "accent": "British English",
-      "description": "Warm, friendly British female voice"
-    },
-    {
-      "voice_id": "aura-atlas-en",
-      "name": "Atlas",
-      "gender": "male",
-      "accent": "British English",
-      "description": "Confident British male voice"
+      "voice_id": "jake",
+      "name": "Jake",
+      "model": "advanced",
+      "gender": "Male",
+      "free": false,
+      "is_custom": true
     }
   ]
 }
 ```
 </ResponseExample>
 
-## Using Voices
-
-Once you've selected a voice, use its `voice_id` in your TTS request:
-
-```json
-{
-  "text": "Hello, this is a test.",
-  "voice": "aura-asteria-en",
-  "model": "base"
-}
-```
-
-<Warning>
-  Make sure the voice belongs to the model you're using. Base voices can only be used with `model: "base"`, and Advance voices with `model: "advance"`.
-</Warning>
-
-## Custom Voices (Advance Model)
-
-When querying `?model=advance`, you may see custom voices you've created:
-
-```json
-{
-  "voice_id": "custom_abc123",
-  "name": "My Brand Voice",
-  "gender": "female",
-  "accent": "American English",
-  "description": "Cloned voice from uploaded samples",
-  "custom": true
-}
-```
-
-<Card title="Create Custom Voices" icon="wand-magic-sparkles" href="https://audixa.ai/dashboard/custom">
-  Clone your own voice in the dashboard.
-</Card>
-
 ## Error Responses
-
-<Accordion title="400 Bad Request">
-Missing or invalid `model` parameter.
-
-```json
-{
-  "detail": "Model parameter is required. Use 'base' or 'advance'."
-}
-```
-</Accordion>
 
 <Accordion title="401 Unauthorized">
 Missing or invalid API key.

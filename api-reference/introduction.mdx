@@ -10,7 +10,7 @@ Welcome to the Audixa API Reference. This section provides detailed documentatio
 All API requests are made to:
 
 ```
-https://api.audixa.ai/v2
+https://api.audixa.ai/v3
 ```
 
 ## Authentication
@@ -25,6 +25,19 @@ All endpoints require authentication via the `x-api-key` header:
   See the Authentication guide for details on obtaining and using API keys.
 </Card>
 
+## Official SDKs
+
+We interpret your request using our official open-source SDKs for Python and Node.js:
+
+<CardGroup cols={2}>
+  <Card title="Python SDK" icon="python" href="https://github.com/Audixa/audixa-python">
+    `pip install audixa`
+  </Card>
+  <Card title="Node.js SDK" icon="node" href="https://github.com/Audixa/audixa-node">
+    `npm install audixa`
+  </Card>
+</CardGroup>
+
 ## Async Workflow
 
 Audixa uses an **asynchronous workflow** for audio generation:
@@ -35,28 +48,28 @@ sequenceDiagram
     participant Audixa API
     participant CDN
     
-    Client->>Audixa API: POST /tts (text, voice, model)
-    Audixa API-->>Client: 201 Created {generation_id}
+    Client->>Audixa API: POST /v3/tts (text, voice, model)
+    Audixa API-->>Client: 200 OK {generation_id, status: "IN_QUEUE"}
     
     loop Poll until complete
-        Client->>Audixa API: GET /status?generation_id=...
-        Audixa API-->>Client: {status: "Generating"}
+        Client->>Audixa API: GET /v3/tts?generation_id=...
+        Audixa API-->>Client: {status: "GENERATING"}
     end
     
-    Audixa API-->>Client: {status: "Completed", url: "..."}
+    Audixa API-->>Client: {status: "COMPLETED", audio_url: "..."}
     Client->>CDN: Download audio file
-    CDN-->>Client: MP3 audio
+    CDN-->>Client: Audio file
 ```
 
 <Steps>
   <Step title="Submit TTS Request">
-    POST to `/tts` with your text, voice, and model. Receive a `generation_id`.
+    POST to `/v3/tts` with your text, voice, and model. Receive a `generation_id` and initial status `IN_QUEUE`.
   </Step>
   <Step title="Poll Status">
-    GET `/status` with your `generation_id` until status is `Completed`.
+    GET `/v3/tts` with your `generation_id` until status is `COMPLETED`.
   </Step>
   <Step title="Download Audio">
-    Fetch the audio file from the returned `url`.
+    Fetch the audio file from the returned `audio_url`.
   </Step>
 </Steps>
 
@@ -66,11 +79,17 @@ sequenceDiagram
   <Card title="POST /tts" icon="play" href="/api-reference/tts">
     Start a text-to-speech generation job.
   </Card>
-  <Card title="GET /status" icon="clock" href="/api-reference/status">
+  <Card title="GET /tts (Status)" icon="clock" href="/api-reference/generation">
     Check the status of a generation job.
   </Card>
   <Card title="GET /voices" icon="users" href="/api-reference/voices">
     List available voices for a model.
+  </Card>
+  <Card title="GET /history" icon="list" href="/api-reference/history">
+    Retrieve generation history.
+  </Card>
+  <Card title="WS /stream" icon="bolt" href="/api-reference/streaming">
+    Real-time audio streaming.
   </Card>
 </CardGroup>
 
