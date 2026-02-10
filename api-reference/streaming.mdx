@@ -54,7 +54,7 @@ Sent when processing begins.
 ```
 
 **B. Audio Chunks (Binary)**
-Raw binary audio data (PCM/WAV chunks) will stream immediately after the "started" message. Append these chunks to your audio buffer.
+Raw binary audio data streams immediately after the "started" message. See [Audio Format](#audio-format) below for decoding details. Append these chunks to your audio buffer or play them directly.
 
 **C. Completion (JSON)**
 Sent when the stream ends.
@@ -73,53 +73,98 @@ Sent when the stream ends.
 }
 ```
 
+## Audio Format
+
+All binary audio chunks are streamed in a **standardized format**, consistent across all models (`base`, `advanced`, `turbo`):
+
+| Property | Value |
+|----------|-------|
+| **Encoding** | Raw PCM (uncompressed) |
+| **Sample Format** | 32-bit float (`float32`) |
+| **Sample Rate** | 24,000 Hz |
+| **Channels** | 1 (Mono) |
+| **Byte Order** | Little-endian |
+
+<Warning>
+The streamed chunks are **raw PCM float32** — not WAV or MP3. Each sample is a 4-byte IEEE 754 float, typically in the range `[-1.0, 1.0]`. You must decode them as `float32`, not `int16`, or the audio will sound like static noise.
+</Warning>
+
+<Tip>
+The `completed` message includes an `audio_url` pointing to the fully encoded file (WAV/MP3) on the CDN. You can use this as a fallback or for saving a complete copy.
+</Tip>
+
 ## Examples
+
+### Real-Time Playback
+
+Play audio chunks as they arrive for the lowest perceived latency.
 
 <CodeGroup>
 ```python Python
 import websockets
 import json
 import asyncio
+import numpy as np
+import sounddevice as sd
+
+# Audio format — must match server output
+RATE = 24000        # 24 kHz
+CHANNELS = 1        # Mono
+DTYPE = 'float32'   # 32-bit float PCM
 
 async def stream_tts():
-    uri = "wss://api.audixa.ai/v3/tts/stream?api_key=YOUR_KEY"
-    async with websockets.connect(uri) as websocket:
-        # Send Request
-        await websocket.send(json.dumps({
-            "text": "Hello from the stream!",
-            "voice_id": "am_ethan",
-            "model": "base"
-        }))
-        
-        # Listen
-        audio_chunks = []
-        while True:
-            msg = await websocket.recv()
-            if isinstance(msg, str):
-                data = json.loads(msg)
-                if data["type"] == "started":
-                    print(f"Stream started: {data['generation_id']}")
-                elif data["type"] == "completed":
-                    print(f"Stream finished! Backup URL: {data.get('audio_url')}")
-                    break
-                elif data["type"] == "error":
-                    print(f"Error: {data['message']}")
-                    break
-            else:
-                # Binary audio chunk
-                audio_chunks.append(msg)
-                print(f"Received {len(msg)} bytes of audio")
+    audio_stream = sd.RawOutputStream(
+        samplerate=RATE,
+        channels=CHANNELS,
+        dtype=DTYPE,
+    )
+    audio_stream.start()
 
-        # Save audio to file
-        with open("streamed_output.wav", "wb") as f:
-            for chunk in audio_chunks:
-                f.write(chunk)
+    uri = "wss://api.audixa.ai/v3/tts/stream?api_key=YOUR_KEY"
+    try:
+        async with websockets.connect(uri) as websocket:
+            await websocket.send(json.dumps({
+                "text": "Hello from the stream!",
+                "voice_id": "am_ethan",
+                "model": "base"
+            }))
+
+            while True:
+                msg = await websocket.recv()
+                if isinstance(msg, str):
+                    data = json.loads(msg)
+                    if data["type"] == "started":
+                        print("Stream started!")
+                    elif data["type"] == "completed":
+                        print(f"Done! CDN URL: {data.get('audio_url')}")
+                        break
+                    elif data["type"] == "error":
+                        print(f"Error: {data['message']}")
+                        break
+                else:
+                    # Decode float32 PCM and play immediately
+                    audio_stream.write(np.frombuffer(msg, dtype=DTYPE))
+    finally:
+        audio_stream.stop()
+        audio_stream.close()
 
 asyncio.run(stream_tts())
 ```
 
 ```typescript TypeScript
 import WebSocket from 'ws';
+import Speaker from 'speaker';
+
+const SAMPLE_RATE = 24000;
+
+// npm install speaker — streams raw PCM to system audio
+const speaker = new Speaker({
+    channels: 1,
+    bitDepth: 32,
+    sampleRate: SAMPLE_RATE,
+    float: true,
+    signed: true,
+});
 
 const ws = new WebSocket('wss://api.audixa.ai/v3/tts/stream?api_key=YOUR_KEY');
 
@@ -133,15 +178,15 @@ ws.on('open', () => {
 
 ws.on('message', (data: WebSocket.Data, isBinary: boolean) => {
     if (isBinary) {
-        // Handle audio data (e.g. append to buffer)
-        const buffer = data as Buffer;
-        console.log(`Received ${buffer.length} bytes of audio`);
+        // Write raw float32 PCM directly to speaker
+        speaker.write(data as Buffer);
     } else {
         const msg = JSON.parse(data.toString());
         if (msg.type === 'started') {
             console.log(`Stream started: ${msg.generation_id}`);
         } else if (msg.type === 'completed') {
-            console.log('Stream finished!');
+            console.log(`Done! CDN URL: ${msg.audio_url}`);
+            speaker.end();
             ws.close();
         } else if (msg.type === 'error') {
             console.error('Error:', msg.message);
@@ -151,10 +196,158 @@ ws.on('message', (data: WebSocket.Data, isBinary: boolean) => {
 });
 ```
 
-```javascript JavaScript
-// Node.js
+```javascript Browser
+// Real-time playback in the browser using Web Audio API
+const SAMPLE_RATE = 24000;
+
+async function streamTTS(apiKey) {
+    const ctx = new AudioContext({ sampleRate: SAMPLE_RATE });
+    const ws = new WebSocket(`wss://api.audixa.ai/v3/tts/stream?api_key=${apiKey}`);
+
+    let nextStartTime = 0;
+
+    ws.onopen = () => {
+        ws.send(JSON.stringify({
+            text: 'Hello from the stream!',
+            voice_id: 'am_ethan',
+            model: 'base'
+        }));
+    };
+
+    ws.onmessage = (event) => {
+        if (typeof event.data === 'string') {
+            const msg = JSON.parse(event.data);
+            if (msg.type === 'started') {
+                console.log('Stream started:', msg.generation_id);
+                nextStartTime = ctx.currentTime;
+            } else if (msg.type === 'completed') {
+                console.log('Done! CDN URL:', msg.audio_url);
+            } else if (msg.type === 'error') {
+                console.error('Error:', msg.message);
+                ws.close();
+            }
+        } else {
+            // Decode float32 PCM and schedule seamless playback
+            event.data.arrayBuffer().then((arrayBuf) => {
+                const float32Data = new Float32Array(arrayBuf);
+                const audioBuffer = ctx.createBuffer(1, float32Data.length, SAMPLE_RATE);
+                audioBuffer.getChannelData(0).set(float32Data);
+
+                const source = ctx.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(ctx.destination);
+
+                const startAt = Math.max(ctx.currentTime, nextStartTime);
+                source.start(startAt);
+                nextStartTime = startAt + audioBuffer.duration;
+            });
+        }
+    };
+}
+
+// Must be called from a user gesture (e.g., button click)
+// streamTTS('YOUR_KEY');
+```
+</CodeGroup>
+
+---
+
+### Save to File
+
+Collect all audio chunks and save a complete file when the stream ends.
+
+<CodeGroup>
+```python Python
+import websockets
+import json
+import asyncio
+import numpy as np
+import soundfile as sf
+
+async def stream_tts():
+    uri = "wss://api.audixa.ai/v3/tts/stream?api_key=YOUR_KEY"
+    async with websockets.connect(uri) as websocket:
+        await websocket.send(json.dumps({
+            "text": "Hello from the stream!",
+            "voice_id": "am_ethan",
+            "model": "base"
+        }))
+
+        audio_chunks = []
+        while True:
+            msg = await websocket.recv()
+            if isinstance(msg, str):
+                data = json.loads(msg)
+                if data["type"] == "completed":
+                    print(f"Done! CDN URL: {data.get('audio_url')}")
+                    break
+                elif data["type"] == "error":
+                    print(f"Error: {data['message']}")
+                    break
+            else:
+                # Decode float32 PCM
+                audio_chunks.append(np.frombuffer(msg, dtype=np.float32))
+
+        # Combine chunks and save as WAV
+        audio = np.concatenate(audio_chunks)
+        sf.write("streamed_output.wav", audio, 24000)
+        print("Saved to streamed_output.wav")
+
+asyncio.run(stream_tts())
+```
+
+```typescript TypeScript
+import WebSocket from 'ws';
+import * as fs from 'fs';
+import { WaveFile } from 'wavefile';
+
+const SAMPLE_RATE = 24000;
+const audioChunks: Buffer[] = [];
+
+const ws = new WebSocket('wss://api.audixa.ai/v3/tts/stream?api_key=YOUR_KEY');
+
+ws.on('open', () => {
+    ws.send(JSON.stringify({
+        text: 'Hello from the stream!',
+        voice_id: 'am_ethan',
+        model: 'base'
+    }));
+});
+
+ws.on('message', (data: WebSocket.Data, isBinary: boolean) => {
+    if (isBinary) {
+        const buffer = data as Buffer;
+        console.log(`Received ${buffer.length / 4} samples`);
+        audioChunks.push(buffer);
+    } else {
+        const msg = JSON.parse(data.toString());
+        if (msg.type === 'completed') {
+            console.log(`Done! CDN URL: ${msg.audio_url}`);
+
+            // Combine and save as WAV using wavefile
+            const combined = Buffer.concat(audioChunks);
+            const float32 = new Float32Array(
+                combined.buffer, combined.byteOffset, combined.length / 4
+            );
+            const wav = new WaveFile();
+            wav.fromScratch(1, SAMPLE_RATE, '32f', float32);
+            fs.writeFileSync('streamed_output.wav', wav.toBuffer());
+            console.log('Saved to streamed_output.wav');
+            ws.close();
+        } else if (msg.type === 'error') {
+            console.error('Error:', msg.message);
+            ws.close();
+        }
+    }
+});
+```
+
+```javascript Node.js
 const WebSocket = require('ws');
-// For browser, use: const ws = new WebSocket('wss://...');
+const fs = require('fs');
+
+const SAMPLE_RATE = 24000;
+const audioChunks = [];
 
 const ws = new WebSocket('wss://api.audixa.ai/v3/tts/stream?api_key=YOUR_KEY');
 
@@ -168,14 +361,19 @@ ws.on('open', () => {
 
 ws.on('message', (data, isBinary) => {
     if (isBinary) {
-        // Handle audio data (e.g. append to buffer)
-        console.log(`Received ${data.length} bytes of audio`);
+        // Raw float32 PCM: 4 bytes per sample
+        console.log(`Received ${data.length / 4} samples (${data.length} bytes)`);
+        audioChunks.push(Buffer.from(data));
     } else {
         const msg = JSON.parse(data.toString());
-        if (msg.type === 'started') {
-            console.log(`Stream started: ${msg.generation_id}`);
-        } else if (msg.type === 'completed') {
-            console.log('Stream finished!');
+        if (msg.type === 'completed') {
+            console.log(`Done! CDN URL: ${msg.audio_url}`);
+
+            // Save raw PCM — convert to WAV with ffmpeg:
+            // ffmpeg -f f32le -ar 24000 -ac 1 -i output.pcm output.wav
+            const combined = Buffer.concat(audioChunks);
+            fs.writeFileSync('output.pcm', combined);
+            console.log('Saved raw PCM to output.pcm');
             ws.close();
         } else if (msg.type === 'error') {
             console.error('Error:', msg.message);
@@ -185,6 +383,20 @@ ws.on('message', (data, isBinary) => {
 });
 ```
 </CodeGroup>
+
+---
+
+### Other Languages & CLI
+
+<Note>
+WebSocket is a bidirectional protocol — standard HTTP tools like **cURL** cannot be used for streaming. For CLI testing, you can use [websocat](https://github.com/vi/websocat), though binary audio handling is limited in terminal tools.
+
+For **any language** with a WebSocket client, the decoding rules are the same:
+- Connect to `wss://api.audixa.ai/v3/tts/stream?api_key=YOUR_KEY`
+- Send a JSON request, then listen for messages
+- **Text messages** → JSON control events (`started`, `completed`, `error`)
+- **Binary messages** → Raw PCM audio: **float32, little-endian, 24 kHz, mono** (4 bytes per sample)
+</Note>
 
 ## WebSocket Close Codes
 
