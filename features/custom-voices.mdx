@@ -45,7 +45,7 @@ You can use your cloned voice programmatically by referencing its unique `voice_
 In the [Clone Voices dashboard](https://audixa.ai/app/custom-voices), find your voice in the "Your Voices" grid. You can copy the Voice ID from there (if available) or use the API to list your voices.
 
 ### 2. Make the API Request
-Set the `voice` parameter to your Voice ID and the `model` parameter to `advanced`.
+Set the `voice_id` parameter to your Voice ID and the `model` parameter to `advanced`.
 
 <CodeGroup>
 ```python Python
@@ -55,10 +55,34 @@ audixa.set_api_key("YOUR_API_KEY")
 
 audio_url = audixa.tts_and_wait(
     "This is my custom cloned voice.",
-    voice="custom_voice_12345",
-    model="advanced", # Required for custom voices
+    voice_id="custom_voice_12345",
+    model="advanced",  # Required for custom voices
     speed=1.0,
 )
+```
+
+```typescript TypeScript
+import Audixa from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+const audioUrl = await audixa.generateTTS({
+  text: 'This is my custom cloned voice.',
+  voice_id: 'custom_voice_12345',
+  model: 'advanced'  // Required for custom voices
+});
+```
+
+```javascript JavaScript
+import Audixa from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+const audioUrl = await audixa.generateTTS({
+  text: 'This is my custom cloned voice.',
+  voice_id: 'custom_voice_12345',
+  model: 'advanced'  // Required for custom voices
+});
 ```
 
 ```bash cURL
@@ -67,7 +91,7 @@ curl -X POST "https://api.audixa.ai/v3/tts" \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{
     "text": "This is my custom cloned voice.",
-    "voice": "custom_voice_12345",
+    "voice_id": "custom_voice_12345",
     "model": "advanced",
     "speed": 1.0
   }'

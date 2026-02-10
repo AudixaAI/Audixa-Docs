@@ -12,7 +12,7 @@ Audixa provides two model tiers:
 | Model | Description | Use Case |
 |-------|-------------|----------|
 | **Base** | Standard high-quality voices | General TTS, high volume, cost-effective |
-| **Advance** | Premium voices with cloning and emotions | Custom voices, expressive speech, dubbing |
+| **Advanced** | Premium voices with cloning and emotions | Custom voices, expressive speech, dubbing |
 
 ## Listing Voices via API
 
@@ -30,28 +30,39 @@ curl -X GET "https://api.audixa.ai/v3/voices?model=advanced" \
 ```
 
 ```python Python
-import requests
+import audixa
+
+audixa.set_api_key("YOUR_API_KEY")
 
 # Get Base model voices
-response = requests.get(
-    "https://api.audixa.ai/v3/voices",
-    params={"model": "base"},
-    headers={"x-api-key": "YOUR_API_KEY"}
-)
-
-voices = response.json()["voices"]
+voices = audixa.list_voices(model="base")
 for voice in voices:
     print(f"{voice['name']} ({voice['voice_id']}) - {voice.get('accent', 'N/A')}")
+
+# Get Advanced model voices
+advanced_voices = audixa.list_voices(model="advanced")
+```
+
+```typescript TypeScript
+import Audixa from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+// Get Base model voices
+const { voices } = await audixa.getVoices({ model: 'base' });
+for (const voice of voices) {
+  console.log(`${voice.name} (${voice.voice_id}) - ${voice.accent ?? 'N/A'}`);
+}
 ```
 
 ```javascript JavaScript
-const response = await fetch(
-  "https://api.audixa.ai/v3/voices?model=base",
-  { headers: { "x-api-key": "YOUR_API_KEY" } }
-);
+import Audixa from 'audixa';
 
-const data = await response.json();
-data.voices.forEach(voice => {
+const audixa = new Audixa('YOUR_API_KEY');
+
+// Get Base model voices
+const { voices } = await audixa.getVoices({ model: 'base' });
+voices.forEach(voice => {
   console.log(`${voice.name} (${voice.voice_id}) - ${voice.accent || 'N/A'}`);
 });
 ```
@@ -72,23 +83,16 @@ data.voices.forEach(voice => {
   "voices": [
     {
       "voice_id": "am_ethan",
-      "name": "Asteria",
-      "gender": "female",
-      "accent": "American English",
-      "description": "Clear, professional female voice"
+      "name": "Ethan",
+      "gender": "Male",
+      "accent": "American",
+      "description": "Clear, professional male voice"
     },
     {
-      "voice_id": "aura-orion-en",
-      "name": "Orion",
-      "gender": "male",
-      "accent": "American English",
-      "description": "Deep, authoritative male voice"
-    },
-    {
-      "voice_id": "aura-luna-en",
+      "voice_id": "af_luna",
       "name": "Luna",
-      "gender": "female",
-      "accent": "British English",
+      "gender": "Female",
+      "accent": "British",
       "description": "Warm, friendly British female voice"
     }
   ]
@@ -104,9 +108,11 @@ Each voice object includes:
 |----------|------|-------------|
 | `voice_id` | string | Unique identifier to use in `/tts` requests |
 | `name` | string | Human-friendly voice name |
-| `gender` | string | `male` or `female` |
-| `accent` | string | Voice accent/language (e.g., "American English") |
+| `gender` | string | `Male` or `Female` |
+| `accent` | string | Voice accent/language (e.g., "American") |
 | `description` | string | Brief description of voice characteristics |
+| `free` | boolean | Whether the voice is free to use |
+| `is_custom` | boolean | Whether this is your custom voice |
 
 ## Using a Voice
 
@@ -143,7 +149,7 @@ With the **Advanced** model, you can:
   </Card>
 </CardGroup>
 
-Custom voices appear in your `/voices?model=advanced` response with a `custom: true` flag.
+Custom voices appear in your `/voices?model=advanced` response with `is_custom: true`.
 
 ## Voice Selection Tips
 

@@ -1,6 +1,6 @@
 ---
 title: "AI Models"
-description: "Compare Base and Advance models to choose the right one for your needs"
+description: "Compare Base and Advanced models to choose the right one for your needs"
 ---
 
 Audixa AI offers two powerful text-to-speech models to suit different needs: **Base** and **Advanced**. Each model is optimized for a different set of use cases, from general-purpose narration to highly expressive, custom voice generation.
@@ -40,7 +40,7 @@ The Advanced model is built for users who require the highest level of customiza
     Fine-tuned for more nuanced and emotionally resonant speech.
   </Card>
   <Card title="Greater Customization" icon="sliders">
-    Detailed control over expressiveness settings like `cfg_weight`.
+    Detailed control over expressiveness settings like `cfg_weight` and `exaggeration`.
   </Card>
 </CardGroup>
 
@@ -124,7 +124,29 @@ const baseAudio = await audixa.generateTTS({
 });
 
 // Using Advanced model with expressiveness settings
-const advanceAudio = await audixa.generateTTS({
+const advancedAudio = await audixa.generateTTS({
+  text: 'Hello from the Advanced model!',
+  voice_id: 'am_ethan',
+  model: 'advanced',
+  cfg_weight: 3.5,
+  exaggeration: 0.7
+});
+```
+
+```javascript JavaScript
+import Audixa from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+// Using Base model
+const baseAudio = await audixa.generateTTS({
+  text: 'Hello from the Base model.',
+  voice_id: 'am_ethan',
+  model: 'base'
+});
+
+// Using Advanced model with expressiveness settings
+const advancedAudio = await audixa.generateTTS({
   text: 'Hello from the Advanced model!',
   voice_id: 'am_ethan',
   model: 'advanced',

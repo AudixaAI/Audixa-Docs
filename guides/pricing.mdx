@@ -72,16 +72,50 @@ When your balance runs out, API requests return a `402 Payment Required` error:
 
 <CodeGroup>
 ```python Python
-response = requests.post("https://api.audixa.ai/v3/tts", ...)
+from audixa.exceptions import InsufficientBalanceError
 
-if response.status_code == 402:
+try:
+    audio_url = audixa.tts_and_wait(
+        "Hello!",
+        voice_id="am_ethan",
+    )
+except InsufficientBalanceError:
     print("Insufficient balance. Please add funds at https://audixa.ai/dashboard/billing")
 ```
 
+```typescript TypeScript
+import Audixa, { AudixaError } from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+try {
+  const audioUrl = await audixa.generateTTS({
+    text: 'Hello!',
+    voice_id: 'am_ethan',
+    model: 'base'
+  });
+} catch (error) {
+  if (error instanceof AudixaError && error.code === 'INSUFFICIENT_BALANCE') {
+    console.log('Insufficient balance. Please add funds.');
+  }
+}
+```
+
 ```javascript JavaScript
-if (response.status === 402) {
-  console.log("Insufficient balance. Please add funds.");
-  // Optionally redirect user to billing page
+import Audixa, { AudixaError } from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+try {
+  const audioUrl = await audixa.generateTTS({
+    text: 'Hello!',
+    voice_id: 'am_ethan',
+    model: 'base'
+  });
+} catch (error) {
+  if (error instanceof AudixaError && error.code === 'INSUFFICIENT_BALANCE') {
+    console.log('Insufficient balance. Please add funds.');
+  }
 }
 ```
 </CodeGroup>

@@ -87,7 +87,22 @@ for voice in voices:
     print(f"{voice['name']} ({voice['voice_id']})")
 ```
 
-```javascript Node.js
+```typescript TypeScript
+import Audixa from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+const { voices } = await audixa.getVoices({ 
+  model: 'base', 
+  limit: 50 
+});
+
+for (const voice of voices) {
+  console.log(`${voice.name} (${voice.voice_id})`);
+}
+```
+
+```javascript JavaScript
 import Audixa from 'audixa';
 
 const audixa = new Audixa('YOUR_API_KEY');

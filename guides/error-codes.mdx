@@ -22,7 +22,7 @@ Some errors may include additional context:
   "detail": "Validation error",
   "errors": [
     {"field": "text", "message": "Text is required"},
-    {"field": "voice", "message": "Invalid voice ID"}
+    {"field": "voice_id", "message": "Invalid voice ID"}
   ]
 }
 ```
@@ -81,7 +81,7 @@ Returned when request parameters are missing or invalid.
 </ResponseExample>
 
 **Common causes:**
-- Missing required fields (`text`, `voice`, `model`)
+- Missing required fields (`text`, `voice_id`, `model`)
 - Invalid `model` value (must be `base` or `advanced`)
 - Text exceeds maximum length
 
@@ -171,53 +171,96 @@ Returned when an unexpected server error occurs.
 
 ## Error Handling Example
 
+Both SDKs provide typed error classes for robust error handling:
+
 <CodeGroup>
 ```python Python
-import requests
-
-response = requests.post(
-    "https://api.audixa.ai/v3/tts",
-    headers={"x-api-key": "YOUR_API_KEY"},
-    json={"text": "Hello", "voice_id": "am_ethan", "model": "base"}
+import audixa
+from audixa.exceptions import (
+    AudixaError,
+    AuthenticationError,
+    RateLimitError,
+    InsufficientBalanceError,
 )
 
-if response.status_code == 201:
-    print("Success:", response.json())
-elif response.status_code == 401:
+audixa.set_api_key("YOUR_API_KEY")
+
+try:
+    audio_url = audixa.tts_and_wait(
+        "Hello from Audixa!",
+        voice_id="am_ethan",
+        model="base",
+    )
+    print("Success:", audio_url)
+except AuthenticationError:
     print("Authentication failed. Check your API key.")
-elif response.status_code == 402:
+except InsufficientBalanceError:
     print("Insufficient balance. Please add funds.")
-elif response.status_code == 429:
-    print("Rate limited. Retry later.")
-else:
-    print(f"Error {response.status_code}:", response.json().get("detail"))
+except RateLimitError as e:
+    print(f"Rate limited. Retry after {e.retry_after} seconds.")
+except AudixaError as e:
+    print(f"API Error ({e.status_code}): {e.message}")
+```
+
+```typescript TypeScript
+import Audixa, { AudixaError } from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+try {
+  const audioUrl = await audixa.generateTTS({
+    text: 'Hello from Audixa!',
+    voice_id: 'am_ethan',
+    model: 'base'
+  });
+  console.log('Success:', audioUrl);
+} catch (error) {
+  if (error instanceof AudixaError) {
+    switch (error.code) {
+      case 'AUTHENTICATION_ERROR':
+        console.log('Authentication failed. Check your API key.');
+        break;
+      case 'INSUFFICIENT_BALANCE':
+        console.log('Insufficient balance. Please add funds.');
+        break;
+      case 'RATE_LIMITED':
+        console.log('Rate limited. Retry later.');
+        break;
+      default:
+        console.log(`Error (${error.statusCode}): ${error.message}`);
+    }
+  }
+}
 ```
 
 ```javascript JavaScript
-const response = await fetch("https://api.audixa.ai/v3/tts", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "x-api-key": "YOUR_API_KEY"
-  },
-  body: JSON.stringify({
-    text: "Hello",
-    voice_id: "aura-asteria-en",
-    model: "base"
-  })
-});
+import Audixa, { AudixaError } from 'audixa';
 
-if (response.status === 201) {
-  console.log("Success:", await response.json());
-} else if (response.status === 401) {
-  console.log("Authentication failed. Check your API key.");
-} else if (response.status === 402) {
-  console.log("Insufficient balance. Please add funds.");
-} else if (response.status === 429) {
-  console.log("Rate limited. Retry later.");
-} else {
-  const error = await response.json();
-  console.log(`Error ${response.status}:`, error.detail);
+const audixa = new Audixa('YOUR_API_KEY');
+
+try {
+  const audioUrl = await audixa.generateTTS({
+    text: 'Hello from Audixa!',
+    voice_id: 'am_ethan',
+    model: 'base'
+  });
+  console.log('Success:', audioUrl);
+} catch (error) {
+  if (error instanceof AudixaError) {
+    switch (error.code) {
+      case 'AUTHENTICATION_ERROR':
+        console.log('Authentication failed. Check your API key.');
+        break;
+      case 'INSUFFICIENT_BALANCE':
+        console.log('Insufficient balance. Please add funds.');
+        break;
+      case 'RATE_LIMITED':
+        console.log('Rate limited. Retry later.');
+        break;
+      default:
+        console.log(`Error (${error.statusCode}): ${error.message}`);
+    }
+  }
 }
 ```
 </CodeGroup>

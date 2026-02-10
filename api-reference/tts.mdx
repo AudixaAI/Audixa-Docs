@@ -125,7 +125,7 @@ audixa.set_api_key("YOUR_API_KEY")
 
 # Asynchronous generation (returns immediately)
 generation_id = audixa.tts(
-    text="Hello world from Audixa!",
+    "Hello world from Audixa!",
     voice_id="am_ethan",
     model="base",
 )
@@ -133,12 +133,34 @@ print(f"Generation ID: {generation_id}")
 
 # Or generate and wait for completion
 audio_url = audixa.tts_and_wait(
-    text="Hello world from Audixa!",
-    voice_id="emma",
+    "Hello world from Audixa!",
+    voice_id="am_ethan",
 )
 ```
 
-```javascript Node.js
+```typescript TypeScript
+import Audixa from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+// Asynchronous generation
+const { generation_id } = await audixa.startTTS({
+  text: 'Hello world from Audixa!',
+  voice_id: 'am_ethan',
+  model: 'base'
+});
+console.log('Generation ID:', generation_id);
+
+// Or generate and wait (convenience method)
+const audioUrl = await audixa.generateTTS({
+  text: 'Hello world from Audixa!',
+  voice_id: 'am_ethan',
+  model: 'base'
+});
+console.log('Audio URL:', audioUrl);
+```
+
+```javascript JavaScript
 import Audixa from 'audixa';
 
 const audixa = new Audixa('YOUR_API_KEY');

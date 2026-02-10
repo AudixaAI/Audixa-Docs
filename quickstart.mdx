@@ -49,7 +49,7 @@ audixa.set_api_key("YOUR_API_KEY")
 # Generate TTS and get audio URL
 audio_url = audixa.tts_and_wait(
     "Hello! Welcome to Audixa, the best text-to-speech API.",
-    voice="am_ethan",
+    voice_id="am_ethan",
 )
 print(f"Audio URL: {audio_url}")
 
@@ -57,7 +57,7 @@ print(f"Audio URL: {audio_url}")
 audixa.tts_to_file(
     "Hello! Welcome to Audixa.",
     "output.wav",
-    voice="am_ethan",
+    voice_id="am_ethan",
 )
 ```
 
@@ -69,7 +69,7 @@ const audixa = new Audixa('YOUR_API_KEY');
 // Generate TTS and wait for completion
 const audioUrl = await audixa.generateTTS({
   text: 'Hello! Welcome to Audixa, the best text-to-speech API.',
-  voice: 'am_ethan',
+  voice_id: 'am_ethan',
   model: 'base'
 });
 
@@ -83,7 +83,7 @@ const audixa = new Audixa('YOUR_API_KEY');
 
 const audioUrl = await audixa.generateTTS({
   text: 'Hello! Welcome to Audixa, the best text-to-speech API.',
-  voice: 'am_ethan',
+  voice_id: 'am_ethan',
   model: 'base'
 });
 
@@ -97,7 +97,7 @@ curl -X POST "https://api.audixa.ai/v3/tts" \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{
     "text": "Hello! Welcome to Audixa, the best text-to-speech API.",
-    "voice": "am_ethan",
+    "voice_id": "am_ethan",
     "model": "base"
   }'
 
@@ -131,18 +131,19 @@ audixa.set_api_key("YOUR_API_KEY")
 # Base model with speed adjustment
 audio_url = audixa.tts_and_wait(
     "Welcome to Audixa AI, your text-to-speech solution.",
-    voice="am_ethan",
+    voice_id="am_ethan",
     model="base",
     speed=1.1,  # Slightly faster (0.5 to 2.0)
 )
 
-# Advance model with emotion
+# Advanced model with expressiveness controls
 audio_url = audixa.tts_and_wait(
     "This is exciting news! We have launched.",
-    voice="am_ethan",
-    model="advance",
-    emotion="happy",
-    temperature=0.8,
+    voice_id="am_ethan",
+    model="advanced",
+    cfg_weight=3.5,       # Controls how strictly the model follows the style (1.0-5.0)
+    exaggeration=0.7,     # Controls emotional expressiveness (0.0-1.0)
+    audio_format="mp3",   # Output format: "wav" or "mp3"
 )
 ```
 
@@ -154,18 +155,43 @@ const audixa = new Audixa('YOUR_API_KEY');
 // Base model with speed adjustment
 const audioUrl = await audixa.generateTTS({
   text: 'Welcome to Audixa AI, your text-to-speech solution.',
-  voice: 'am_ethan',
+  voice_id: 'am_ethan',
   model: 'base',
   speed: 1.1  // Slightly faster (0.5 to 2.0)
 });
 
-// Advance model with emotion
-const emotionalUrl = await audixa.generateTTS({
+// Advanced model with expressiveness controls
+const expressiveUrl = await audixa.generateTTS({
   text: 'This is exciting news! We have launched.',
-  voice: 'am_ethan',
-  model: 'advance',
-  emotion: 'happy',
-  temperature: 0.8
+  voice_id: 'am_ethan',
+  model: 'advanced',
+  cfg_weight: 3.5,       // Controls how strictly the model follows the style (1.0-5.0)
+  exaggeration: 0.7,     // Controls emotional expressiveness (0.0-1.0)
+  audio_format: 'mp3'    // Output format: "wav" or "mp3"
+});
+```
+
+```javascript JavaScript
+import Audixa from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+// Base model with speed adjustment
+const audioUrl = await audixa.generateTTS({
+  text: 'Welcome to Audixa AI, your text-to-speech solution.',
+  voice_id: 'am_ethan',
+  model: 'base',
+  speed: 1.1
+});
+
+// Advanced model with expressiveness controls
+const expressiveUrl = await audixa.generateTTS({
+  text: 'This is exciting news! We have launched.',
+  voice_id: 'am_ethan',
+  model: 'advanced',
+  cfg_weight: 3.5,
+  exaggeration: 0.7,
+  audio_format: 'mp3'
 });
 ```
 </CodeGroup>

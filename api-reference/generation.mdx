@@ -89,15 +89,35 @@ audixa.set_api_key("YOUR_API_KEY")
 
 status = audixa.status("gen_abc123")
 print(f"Status: {status['status']}")
+
+if status["status"] == "COMPLETED":
+    print(f"Audio URL: {status['audio_url']}")
 ```
 
-```javascript Node.js
+```typescript TypeScript
 import Audixa from 'audixa';
 
 const audixa = new Audixa('YOUR_API_KEY');
 
 const status = await audixa.getStatus('gen_abc123');
 console.log('Status:', status.status);
+
+if (status.status === 'COMPLETED') {
+  console.log('Audio URL:', status.audio_url);
+}
+```
+
+```javascript JavaScript
+import Audixa from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+const status = await audixa.getStatus('gen_abc123');
+console.log('Status:', status.status);
+
+if (status.status === 'COMPLETED') {
+  console.log('Audio URL:', status.audio_url);
+}
 ```
 </RequestExample>
 
@@ -131,10 +151,10 @@ console.log('Status:', status.status);
     Set a maximum timeout (e.g., 60 seconds) to avoid infinite loops.
   </Card>
   <Card title="Error Handling" icon="triangle-exclamation">
-    Always handle the `Failed` status gracefully with retry logic.
+    Always handle the `FAILED` status gracefully with retry logic.
   </Card>
   <Card title="Cache Results" icon="database">
-    Once completed, cache the `url` to avoid re-polling.
+    Once completed, cache the `audio_url` to avoid re-polling.
   </Card>
 </CardGroup>
 

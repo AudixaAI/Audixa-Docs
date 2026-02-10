@@ -73,8 +73,9 @@ Sent when the stream ends.
 }
 ```
 
-## Example (Python)
+## Examples
 
+<CodeGroup>
 ```python Python
 import websockets
 import json
@@ -91,37 +92,77 @@ async def stream_tts():
         }))
         
         # Listen
+        audio_chunks = []
         while True:
             msg = await websocket.recv()
             if isinstance(msg, str):
                 data = json.loads(msg)
                 if data["type"] == "started":
-                    print("Stream started!")
+                    print(f"Stream started: {data['generation_id']}")
                 elif data["type"] == "completed":
-                    print("Stream finished!")
+                    print(f"Stream finished! Backup URL: {data.get('audio_url')}")
                     break
                 elif data["type"] == "error":
                     print(f"Error: {data['message']}")
                     break
             else:
                 # Binary audio chunk
-                # write_to_audio_sink(msg)
+                audio_chunks.append(msg)
                 print(f"Received {len(msg)} bytes of audio")
+
+        # Save audio to file
+        with open("streamed_output.wav", "wb") as f:
+            for chunk in audio_chunks:
+                f.write(chunk)
 
 asyncio.run(stream_tts())
 ```
 
-```javascript JavaScript
-const WebSocket = require('ws');
-// For browser, use window.WebSocket
+```typescript TypeScript
+import WebSocket from 'ws';
 
 const ws = new WebSocket('wss://api.audixa.ai/v3/tts/stream?api_key=YOUR_KEY');
 
 ws.on('open', () => {
     ws.send(JSON.stringify({
-        text: "Hello from the stream!",
-        voice_id: "am_ethan",
-        model: "base"
+        text: 'Hello from the stream!',
+        voice_id: 'am_ethan',
+        model: 'base'
+    }));
+});
+
+ws.on('message', (data: WebSocket.Data, isBinary: boolean) => {
+    if (isBinary) {
+        // Handle audio data (e.g. append to buffer)
+        const buffer = data as Buffer;
+        console.log(`Received ${buffer.length} bytes of audio`);
+    } else {
+        const msg = JSON.parse(data.toString());
+        if (msg.type === 'started') {
+            console.log(`Stream started: ${msg.generation_id}`);
+        } else if (msg.type === 'completed') {
+            console.log('Stream finished!');
+            ws.close();
+        } else if (msg.type === 'error') {
+            console.error('Error:', msg.message);
+            ws.close();
+        }
+    }
+});
+```
+
+```javascript JavaScript
+// Node.js
+const WebSocket = require('ws');
+// For browser, use: const ws = new WebSocket('wss://...');
+
+const ws = new WebSocket('wss://api.audixa.ai/v3/tts/stream?api_key=YOUR_KEY');
+
+ws.on('open', () => {
+    ws.send(JSON.stringify({
+        text: 'Hello from the stream!',
+        voice_id: 'am_ethan',
+        model: 'base'
     }));
 });
 
@@ -132,16 +173,18 @@ ws.on('message', (data, isBinary) => {
     } else {
         const msg = JSON.parse(data.toString());
         if (msg.type === 'started') {
-            console.log('Stream started');
+            console.log(`Stream started: ${msg.generation_id}`);
         } else if (msg.type === 'completed') {
-            console.log('Stream finished');
+            console.log('Stream finished!');
             ws.close();
         } else if (msg.type === 'error') {
             console.error('Error:', msg.message);
+            ws.close();
         }
     }
 });
 ```
+</CodeGroup>
 
 ## WebSocket Close Codes
 

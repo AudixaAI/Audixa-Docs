@@ -46,9 +46,65 @@ When you exceed the rate limit, the API returns a `429 Too Many Requests` error:
 ```
 </ResponseExample>
 
-### Retry Strategy
+<Info>
+  Both the Python and Node.js SDKs have **built-in retry logic** that automatically handles rate limits with exponential backoff. You only need to implement manual retry logic if you're using the REST API directly.
+</Info>
 
-Implement exponential backoff to handle rate limits gracefully:
+### SDK Error Handling
+
+<CodeGroup>
+```python Python
+from audixa.exceptions import RateLimitError
+
+try:
+    audio_url = audixa.tts_and_wait(
+        "Hello world!",
+        voice_id="am_ethan",
+    )
+except RateLimitError as e:
+    print(f"Rate limited! Retry after {e.retry_after} seconds.")
+```
+
+```typescript TypeScript
+import Audixa, { AudixaError } from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+try {
+  const audioUrl = await audixa.generateTTS({
+    text: 'Hello world!',
+    voice_id: 'am_ethan',
+    model: 'base'
+  });
+} catch (error) {
+  if (error instanceof AudixaError && error.code === 'RATE_LIMITED') {
+    console.log('Rate limited! Retry later.');
+  }
+}
+```
+
+```javascript JavaScript
+import Audixa, { AudixaError } from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+try {
+  const audioUrl = await audixa.generateTTS({
+    text: 'Hello world!',
+    voice_id: 'am_ethan',
+    model: 'base'
+  });
+} catch (error) {
+  if (error instanceof AudixaError && error.code === 'RATE_LIMITED') {
+    console.log('Rate limited! Retry later.');
+  }
+}
+```
+</CodeGroup>
+
+### Manual Retry Strategy (REST API)
+
+If using the REST API directly, implement exponential backoff:
 
 <CodeGroup>
 ```python Python

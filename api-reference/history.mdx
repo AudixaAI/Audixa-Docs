@@ -93,7 +93,18 @@ for item in history:
     print(f"{item['generation_id']}: {item['status']}")
 ```
 
-```javascript Node.js
+```typescript TypeScript
+import Audixa from 'audixa';
+
+const audixa = new Audixa('YOUR_API_KEY');
+
+const { history } = await audixa.getHistory({ limit: 10 });
+for (const item of history) {
+  console.log(`${item.generation_id}: ${item.status}`);
+}
+```
+
+```javascript JavaScript
 import Audixa from 'audixa';
 
 const audixa = new Audixa('YOUR_API_KEY');
