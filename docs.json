@@ -116,7 +116,7 @@
     "primary": {
       "type": "button",
       "label": "Get Started",
-      "href": "https://audixa.ai/dashboard"
+      "href": "https://audixa.ai/app"
     }
   },
   "contextual": {
