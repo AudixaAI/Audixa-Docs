@@ -91,7 +91,7 @@
       "anchors": [
         {
           "anchor": "Dashboard",
-          "href": "https://audixa.ai/dashboard",
+          "href": "https://audixa.ai/app",
           "icon": "gauge"
         },
         {
