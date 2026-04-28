@@ -135,8 +135,75 @@ audio_url = audixa.tts_and_wait(
     cfg_weight=3.5,       # Guidance strength: 1.0–5.0 (default: 2.5)
     exaggeration=0.7,     # Expressiveness: 0.0–1.0 (default: 0.5)
     audio_format="mp3",   # "wav" or "mp3"
+    language_code="en",   # ISO 639-1 code (see "Language Codes" below)
 )
 ```
+
+### Language Codes
+
+Both models accept an optional `language_code` argument that tells the
+synthesiser which language the input text is in. The Admin panel uses this
+under the hood, and the SDK exposes it as a first-class parameter on every
+TTS function (`tts`, `tts_and_wait`, `tts_to_file`, and their async variants).
+
+The two models use different code schemes:
+
+```python
+# Base model — single-letter codes
+audixa.tts_and_wait(
+    "Bonjour, bienvenue chez Audixa.",
+    voice_id="ff_siwis",
+    model="base",
+    language_code="f",   # 'f' = French
+)
+
+# Advanced model — ISO 639-1 codes
+audixa.tts_and_wait(
+    "こんにちは、Audixaへようこそ。",
+    voice_id="am_ethan",
+    model="advanced",
+    language_code="ja",  # 'ja' = Japanese
+)
+```
+
+<Tabs>
+  <Tab title="Base model codes">
+    | Code | Language |
+    |------|----------|
+    | `a`  | American English |
+    | `b`  | British English |
+    | `j`  | Japanese |
+    | `z`  | Mandarin Chinese |
+    | `e`  | Spanish |
+    | `f`  | French |
+    | `h`  | Hindi |
+    | `i`  | Italian |
+    | `p`  | Brazilian Portuguese |
+  </Tab>
+  <Tab title="Advanced model codes (ISO 639-1)">
+    | Code | Language | Code | Language |
+    |------|----------|------|----------|
+    | `en` | English  | `nl` | Dutch    |
+    | `ar` | Arabic   | `no` | Norwegian |
+    | `da` | Danish   | `pl` | Polish   |
+    | `de` | German   | `pt` | Portuguese |
+    | `el` | Greek    | `ru` | Russian  |
+    | `es` | Spanish  | `sv` | Swedish  |
+    | `fi` | Finnish  | `sw` | Swahili  |
+    | `fr` | French   | `tr` | Turkish  |
+    | `he` | Hebrew   | `zh` | Chinese  |
+    | `hi` | Hindi    | `ja` | Japanese |
+    | `it` | Italian  | `ko` | Korean   |
+    | `ms` | Malay    |      |          |
+  </Tab>
+</Tabs>
+
+<Note>
+If you omit `language_code`, the model falls back to its default (English).
+The code must match a language supported by the chosen `model`; using an
+Advanced-only code with `model="base"` (or vice-versa) will produce
+unexpected pronunciation.
+</Note>
 
 ## API Reference — Module-Level Functions
 
@@ -175,6 +242,7 @@ These use the global API key set via `audixa.set_api_key()`.
 | `cfg_weight` | `float` | `None` | Advanced model: guidance strength 1.0–5.0 |
 | `exaggeration` | `float` | `None` | Advanced model: expressiveness 0.0–1.0 |
 | `audio_format` | `str` | `None` | Output format: `"wav"` or `"mp3"` |
+| `language_code` | `str` | `None` | Language of the input text. Base model uses single-letter codes (`a`, `b`, `j`, `z`, `e`, `f`, `h`, `i`, `p`); advanced model uses ISO 639-1 (`en`, `de`, `es`, …). See [Language Codes](#language-codes). |
 | `custom_endpoint_slug` | `str` | `None` | Route to custom endpoint |
 | `poll_interval` | `float` | `1.0` | Seconds between status checks (wait functions) |
 | `timeout` | `float` | `120.0` | Max wait time in seconds (wait functions) |

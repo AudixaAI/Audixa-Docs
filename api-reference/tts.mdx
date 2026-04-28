@@ -44,6 +44,21 @@ POST https://api.audixa.ai/v3/tts
   Output format: `wav` or `mp3`.
 </ParamField>
 
+<ParamField body="language_code" type="string">
+  Optional language code for the input text. The accepted values depend on
+  `model`:
+
+  - **Base model** uses single-letter codes:
+    `a` (American English), `b` (British English), `j` (Japanese),
+    `z` (Mandarin Chinese), `e` (Spanish), `f` (French), `h` (Hindi),
+    `i` (Italian), `p` (Brazilian Portuguese).
+  - **Advanced model** uses ISO 639-1 codes:
+    `en`, `ar`, `da`, `de`, `el`, `es`, `fi`, `fr`, `he`, `hi`, `it`,
+    `ja`, `ko`, `ms`, `nl`, `no`, `pl`, `pt`, `ru`, `sv`, `sw`, `tr`, `zh`.
+
+  If omitted, the model falls back to its default language.
+</ParamField>
+
 ## Response
 
 <ResponseField name="generation_id" type="string">
@@ -114,7 +129,8 @@ curl -X POST "https://api.audixa.ai/v3/tts" \
     "voice_id": "am_ethan",
     "model": "base",
     "speed": 1.0,
-    "audio_format": "wav"
+    "audio_format": "wav",
+    "language_code": "a"
   }'
 ```
 
@@ -135,6 +151,14 @@ print(f"Generation ID: {generation_id}")
 audio_url = audixa.tts_and_wait(
     "Hello world from Audixa!",
     voice_id="am_ethan",
+)
+
+# Advanced model in a non-English language
+audio_url = audixa.tts_and_wait(
+    "Hallo, willkommen bei Audixa!",
+    voice_id="am_ethan",
+    model="advanced",
+    language_code="de",
 )
 ```
 
