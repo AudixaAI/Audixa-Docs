@@ -1,214 +1,215 @@
 ---
 title: "Quickstart"
-description: "Generate your first audio with Audixa in under 5 minutes"
+description: "Create and poll a Text-to-Speech generation with the Audixa REST API"
 ---
 
-This guide walks you through generating speech with the Audixa API, from creating your account to downloading your first audio file.
+This guide uses ordinary HTTP requests. There is no Audixa SDK package to
+install: use native `fetch`, Python `requests`, or cURL.
 
-## Step 1: Get Your API Key
+## Step 1: Prepare Your Account
 
 <Steps>
-  <Step title="Create an Account">
-    [Sign up for a free Audixa account](https://audixa.ai/auth/signup?utm_source=docs). New accounts receive **10,000 free credits**.
+  <Step title="Preview the Voices">
+    Listen to fixed samples at [audixa.ai/voices](https://audixa.ai/voices).
+    The sampler does not accept custom text or create free generations.
   </Step>
-  <Step title="Generate API Key">
-    Navigate to [Dashboard → API Keys](https://audixa.ai/dashboard/api) and create a new API key.
+  <Step title="Enable Paid Generation">
+    Create an account, then purchase at least a **$10 top-up** or start a
+    subscription. Audixa does not issue trial credits or free generations.
   </Step>
-  <Step title="Copy Your Key">
-    Copy your API key and store it securely. You'll need it for all API requests.
+  <Step title="Create an API Key">
+    Open [Developers → API Keys](https://audixa.ai/app/developers#api-keys),
+    create a key, and copy it when it is shown.
   </Step>
 </Steps>
 
 <Warning>
-  Keep your API key secret. Never expose it in client-side code or public repositories.
+  Keep your API key secret. Do not place it in browser code shipped to end
+  users, public repositories, logs, or support messages.
 </Warning>
 
-## Step 2: Install the SDK
+## Step 2: Choose a Runtime
 
 <CodeGroup>
-```bash Python
-pip install audixa
+```text JavaScript
+Browser console or Node.js 18+ ES module (native fetch)
 ```
 
-```bash Node.js
-npm install audixa
+```bash Python
+python -m pip install requests
+```
+
+```text cURL
+A POSIX shell with cURL and jq
 ```
 </CodeGroup>
 
-## Step 3: Generate Your First Audio
+## Step 3: Create and Poll a Generation
 
-The simplest way to generate audio is using the convenience methods that handle the entire async workflow for you:
+`POST /v3/tts` starts an asynchronous job. The request text must contain at
+least **1 character**, and the maximum length depends on the active plan.
+Each generation has a minimum billable length of **30 characters (8 tokens)**,
+so shorter sentences are accepted and charged at that minimum.
+Poll `GET /v3/tts?generation_id=...` until the status is `COMPLETED` or
+`FAILED`.
 
 <CodeGroup>
-```python Python
-import audixa
-
-# Set your API key (or use AUDIXA_API_KEY env variable)
-audixa.set_api_key("YOUR_API_KEY")
-
-# Generate TTS and get audio URL
-audio_url = audixa.tts_and_wait(
-    "Hello! Welcome to Audixa, the best text-to-speech API.",
-    voice_id="am_ethan",
-)
-print(f"Audio URL: {audio_url}")
-
-# Or save directly to file
-audixa.tts_to_file(
-    "Hello! Welcome to Audixa.",
-    "output.wav",
-    voice_id="am_ethan",
-)
-```
-
-```typescript TypeScript
-import Audixa from 'audixa';
-
-const audixa = new Audixa('YOUR_API_KEY');
-
-// Generate TTS and wait for completion
-const audioUrl = await audixa.generateTTS({
-  text: 'Hello! Welcome to Audixa, the best text-to-speech API.',
-  voice_id: 'am_ethan',
-  model: 'base'
-});
-
-console.log('Audio URL:', audioUrl);
-```
-
 ```javascript JavaScript
-import Audixa from 'audixa';
+const API_KEY = 'YOUR_API_KEY';
+const API_URL = 'https://api.audixa.ai/v3/tts';
+const headers = {
+  'X-API-Key': API_KEY,
+  'Content-Type': 'application/json'
+};
 
-const audixa = new Audixa('YOUR_API_KEY');
-
-const audioUrl = await audixa.generateTTS({
-  text: 'Hello! Welcome to Audixa, the best text-to-speech API.',
-  voice_id: 'am_ethan',
-  model: 'base'
+const createResponse = await fetch(API_URL, {
+  method: 'POST',
+  headers,
+  body: JSON.stringify({
+    text: 'Hello from Audixa. This example is long enough to generate speech.',
+    voice_id: 'am_ethan',
+    model: 'base',
+    audio_format: 'mp3'
+  })
 });
 
-console.log('Audio URL:', audioUrl);
+if (!createResponse.ok) throw new Error(await createResponse.text());
+let generation = await createResponse.json();
+
+while (!['COMPLETED', 'FAILED'].includes(generation.status)) {
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+  const statusResponse = await fetch(
+    `${API_URL}?generation_id=${encodeURIComponent(generation.generation_id)}`,
+    { method: 'GET', headers: { 'X-API-Key': API_KEY } }
+  );
+  if (!statusResponse.ok) throw new Error(await statusResponse.text());
+  generation = await statusResponse.json();
+}
+
+if (generation.status === 'FAILED') {
+  throw new Error(generation.error_message || 'Generation failed');
+}
+
+console.log(generation.audio_url);
+```
+
+```python Python
+import time
+import requests
+
+API_KEY = "YOUR_API_KEY"
+API_URL = "https://api.audixa.ai/v3/tts"
+headers = {"X-API-Key": API_KEY}
+
+response = requests.post(
+    API_URL,
+    headers=headers,
+    json={
+        "text": "Hello from Audixa. This example is long enough to generate speech.",
+        "voice_id": "am_ethan",
+        "model": "base",
+        "audio_format": "mp3",
+    },
+    timeout=30,
+)
+response.raise_for_status()
+generation = response.json()
+
+while generation["status"] not in {"COMPLETED", "FAILED"}:
+    time.sleep(2)
+    response = requests.get(
+        API_URL,
+        headers=headers,
+        params={"generation_id": generation["generation_id"]},
+        timeout=30,
+    )
+    response.raise_for_status()
+    generation = response.json()
+
+if generation["status"] == "FAILED":
+    raise RuntimeError(generation.get("error_message") or "Generation failed")
+
+print(generation["audio_url"])
 ```
 
 ```bash cURL
-# Step 1: Start TTS job
-curl -X POST "https://api.audixa.ai/v3/tts" \
+#!/usr/bin/env sh
+set -eu
+
+API_KEY="YOUR_API_KEY"
+API_URL="https://api.audixa.ai/v3/tts"
+
+generation=$(curl --fail-with-body --silent --show-error \
+  -X POST "$API_URL" \
+  -H "X-API-Key: $API_KEY" \
   -H "Content-Type: application/json" \
-  -H "x-api-key: YOUR_API_KEY" \
   -d '{
-    "text": "Hello! Welcome to Audixa, the best text-to-speech API.",
+    "text": "Hello from Audixa. This example is long enough to generate speech.",
     "voice_id": "am_ethan",
-    "model": "base"
-  }'
+    "model": "base",
+    "audio_format": "mp3"
+  }')
 
-# Response: {"generation_id": "gen_abc123xyz789"}
+generation_id=$(printf '%s' "$generation" | jq -r '.generation_id')
+status=$(printf '%s' "$generation" | jq -r '.status')
 
-# Step 2: Poll for status
-curl -X GET "https://api.audixa.ai/v3/tts?generation_id=gen_abc123xyz789" \
-  -H "x-api-key: YOUR_API_KEY"
+while [ "$status" != "COMPLETED" ] && [ "$status" != "FAILED" ]; do
+  sleep 2
+  generation=$(curl --fail-with-body --silent --show-error --get \
+    "$API_URL" \
+    -H "X-API-Key: $API_KEY" \
+    --data-urlencode "generation_id=$generation_id")
+  status=$(printf '%s' "$generation" | jq -r '.status')
+done
 
-# Response when complete: {"status": "Completed", "audio_url": "https://..."}
+if [ "$status" = "FAILED" ]; then
+  printf '%s\n' "$generation" | jq -r '.error_message // "Generation failed"' >&2
+  exit 1
+fi
+
+printf '%s\n' "$generation" | jq -r '.audio_url'
 ```
 </CodeGroup>
 
 <ResponseExample>
-```json Response
+```json Completed response
 {
-  "status": "Completed",
-  "audio_url": "https://cdn.audixa.ai/audio/gen_abc123xyz789.wav"
+  "generation_id": "gen_abc123xyz789",
+  "status": "COMPLETED",
+  "voice_id": "am_ethan",
+  "model": "base",
+  "audio_url": "https://cdn.audixa.ai/audio/gen_abc123xyz789.mp3",
+  "error_message": null
 }
 ```
 </ResponseExample>
 
-## Using Advanced Features
+## Request Controls
 
-<CodeGroup>
-```python Python
-import audixa
-
-audixa.set_api_key("YOUR_API_KEY")
-
-# Base model with speed adjustment
-audio_url = audixa.tts_and_wait(
-    "Welcome to Audixa AI, your text-to-speech solution.",
-    voice_id="am_ethan",
-    model="base",
-    speed=1.1,  # Slightly faster (0.5 to 2.0)
-)
-
-# Advanced model with expressiveness controls
-audio_url = audixa.tts_and_wait(
-    "This is exciting news! We have launched.",
-    voice_id="am_ethan",
-    model="advanced",
-    cfg_weight=3.5,       # Controls how strictly the model follows the style (1.0-5.0)
-    exaggeration=0.7,     # Controls emotional expressiveness (0.0-1.0)
-    audio_format="mp3",   # Output format: "wav" or "mp3"
-)
-```
-
-```typescript TypeScript
-import Audixa from 'audixa';
-
-const audixa = new Audixa('YOUR_API_KEY');
-
-// Base model with speed adjustment
-const audioUrl = await audixa.generateTTS({
-  text: 'Welcome to Audixa AI, your text-to-speech solution.',
-  voice_id: 'am_ethan',
-  model: 'base',
-  speed: 1.1  // Slightly faster (0.5 to 2.0)
-});
-
-// Advanced model with expressiveness controls
-const expressiveUrl = await audixa.generateTTS({
-  text: 'This is exciting news! We have launched.',
-  voice_id: 'am_ethan',
-  model: 'advanced',
-  cfg_weight: 3.5,       // Controls how strictly the model follows the style (1.0-5.0)
-  exaggeration: 0.7,     // Controls emotional expressiveness (0.0-1.0)
-  audio_format: 'mp3'    // Output format: "wav" or "mp3"
-});
-```
-
-```javascript JavaScript
-import Audixa from 'audixa';
-
-const audixa = new Audixa('YOUR_API_KEY');
-
-// Base model with speed adjustment
-const audioUrl = await audixa.generateTTS({
-  text: 'Welcome to Audixa AI, your text-to-speech solution.',
-  voice_id: 'am_ethan',
-  model: 'base',
-  speed: 1.1
-});
-
-// Advanced model with expressiveness controls
-const expressiveUrl = await audixa.generateTTS({
-  text: 'This is exciting news! We have launched.',
-  voice_id: 'am_ethan',
-  model: 'advanced',
-  cfg_weight: 3.5,
-  exaggeration: 0.7,
-  audio_format: 'mp3'
-});
-```
-</CodeGroup>
+| Field | Requirement |
+|---|---|
+| `text` | Required; at least 1 character; minimum charge is 30 characters (8 tokens); maximum length is set by the active plan |
+| `voice_id` | Required; must exist, be accessible, and match the selected model |
+| `model` | `base` or `advanced`; defaults to `base` |
+| `audio_format` | `wav` or `mp3`; defaults to `wav` |
+| `speed` | Optional delivery multiplier from `0.5` to `2.0` |
+| `cfg_weight` | Advanced model guidance control from `1.0` to `5.0` |
+| `exaggeration` | Advanced model expressiveness control from `0.0` to `1.0` |
+| `language_code` | Optional; accepted values depend on the model |
 
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Python SDK" icon="python" href="/sdks/python">
-    Full SDK documentation with async support and error handling.
+  <Card title="Python REST Guide" icon="python" href="/sdks/python">
+    Structure the same workflow with Python `requests`.
   </Card>
-  <Card title="Node.js SDK" icon="node-js" href="/sdks/nodejs">
-    TypeScript SDK with full type definitions.
+  <Card title="JavaScript REST Guide" icon="node-js" href="/sdks/nodejs">
+    Use native `fetch` with explicit status polling.
   </Card>
   <Card title="Explore Voices" icon="users" href="/guides/voice-library">
-    Browse the voice library to find the perfect voice for your project.
+    List the voice IDs available to your account.
   </Card>
   <Card title="API Reference" icon="book" href="/api-reference/introduction">
-    Learn about all available parameters and options.
+    Review every accepted request and response field.
   </Card>
 </CardGroup>

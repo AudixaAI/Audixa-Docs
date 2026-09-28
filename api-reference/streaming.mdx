@@ -7,7 +7,8 @@ description: "Stream audio in real-time via WebSocket"
 Audixa provides a WebSocket endpoint for real-time text-to-speech streaming, allowing you to play audio as it is being generated.
 
 <Note>
-Compatible with `wav` and `mp3` output formats.
+The requested `audio_format` (`wav` or `mp3`) controls the completed file. Live
+binary WebSocket chunks use the raw PCM format documented below.
 </Note>
 
 ## Connection
@@ -26,17 +27,35 @@ wss://api.audixa.ai/v3/tts/stream?api_key=YOUR_API_KEY
 ## Protocol
 
 ### 1. Send Request
-Once connected, send a JSON payload with your generation details:
+Once connected, send a JSON payload with your generation details. A voice must
+be compatible with the selected model; use `GET /v3/voices?model=base` or
+`GET /v3/voices?model=advanced` to select one.
 
-```json
+| Model | Compatible voices | Model-specific controls |
+|-------|-------------------|-------------------------|
+| `base` | Base system voices | `speed` from `0.5` to `2.0` |
+| `advanced` | Advanced system voices and compatible account-owned custom voices | `cfg_weight` from `1.0` to `5.0`; `exaggeration` from `0.0` to `1.0` |
+
+```json Base request
 {
-  "text": "Hello, world! This is a streaming test.",  // Required
-  "voice_id": "am_ethan",                               // Required
-  "model": "base",                                  // Optional, default: "base"
-  "speed": 1.0,                                     // Optional, default: 1.0
-  "audio_format": "wav",                            // Optional: "wav" or "mp3"
-  "cfg_weight": 2.5,                                // Optional: Advanced model only
-  "exaggeration": 0.5                               // Optional: Advanced model only
+  "text": "Hello, world! This is a Base streaming test.",
+  "voice_id": "am_ethan",
+  "model": "base",
+  "speed": 1.0,
+  "audio_format": "wav",
+  "language_code": "a"
+}
+```
+
+```json Advanced request
+{
+  "text": "Hello, world! This is an Advanced streaming test.",
+  "voice_id": "YOUR_ADVANCED_VOICE_ID",
+  "model": "advanced",
+  "cfg_weight": 2.5,
+  "exaggeration": 0.5,
+  "audio_format": "wav",
+  "language_code": "en"
 }
 ```
 
@@ -75,7 +94,8 @@ Sent when the stream ends.
 
 ## Audio Format
 
-All binary audio chunks are streamed in a **standardized format**, consistent across all models (`base`, `advanced`, `turbo`):
+All binary audio chunks are streamed in a **standardized format**, consistent
+across the supported `base` and `advanced` models:
 
 | Property | Value |
 |----------|-------|
@@ -97,7 +117,7 @@ The `completed` message includes an `audio_url` pointing to the fully encoded fi
 
 ### Real-Time Playback
 
-Play audio chunks as they arrive for the lowest perceived latency.
+Play audio chunks as they arrive rather than waiting for the completed file.
 
 <CodeGroup>
 ```python Python

@@ -1,151 +1,130 @@
 ---
 title: "Pricing"
-description: "Understanding Audixa's pay-as-you-go billing system"
+description: "Understand Audixa's paid generation, plan rates, and wallet policy"
 ---
 
-Audixa uses a transparent pay-as-you-go billing system. Your cost depends on your subscription plan and the model you choose.
+Audixa uses paid, plan-based generation. There are no free generations or trial
+credits. You can listen to fixed samples at
+[audixa.ai/voices](https://audixa.ai/voices) without creating audio.
 
-## Plan-Based Pricing
+## Enable Generation
 
-Lower-tier plans have valid Pay-as-you-go rates, while higher-tier plans unlock significantly cheaper rates for high-volume usage.
+Choose one of these options before generating through the dashboard or API:
 
-| Plan | Monthly Price | Monthly Balance | Base Model Cost (per 1k chars) | Advanced Model Cost (per 1k chars) |
-|------|---------------|-----------------|--------------------------------|------------------------------------|
-| **Basic** | Free | $0.10 (Trial) | $0.001 | $0.08 |
-| **Starter** | $14 / month | $15 | $0.006 | $0.04 |
-| **Pro** | $29 / month | $30 | $0.003 | $0.02 |
-| **Enterprise** | Custom | Custom | Custom | Custom |
+- Purchase a top-up of at least **$10**.
+- Start a subscription that includes a monthly generation balance.
+
+See [audixa.ai/pricing](https://audixa.ai/pricing) for the currently available
+plans, balances, rates, limits, and commercial terms. The pricing page and your
+authenticated billing dashboard are the source of truth; this guide does not
+duplicate a static price matrix.
+
+## How Generation Cost Works
+
+The server calculates each accepted request from:
+
+1. The submitted text length, represented as billable tokens.
+2. The selected model: `base` or `advanced`.
+3. The per-token rate attached to your active plan.
+
+Short text is accepted from 1 character. TTS billing uses
+`ceil(max(30, character_count) / 4)`, with a minimum charge of **8 tokens** per
+generation. This applies to standard, dedicated, and streaming TTS, and to each
+message in a conversation before the existing conversation multiplier. For
+example, `Hi!` and a 30-character sentence both cost 8 tokens at your plan's
+model rate; 100 characters cost 25 tokens. The minimum affects billing only;
+Audixa generates the submitted text without padding it.
+
+The create-generation response includes `tokens` and `dollar_cost`. Audixa
+reserves the required balance when the request is accepted and restores the
+reserved amount if processing fails.
 
 <Note>
-  **Token Calculation:**
-  Costs are calculated based on the number of characters (tokens).
-  - **1,000 characters** (tokens) ≈ **1 minute** of generated audio.
+  Text length is not a guaranteed audio duration. Speaking speed, language,
+  punctuation, voice, and model can all affect the final duration.
 </Note>
 
-## How Costs Work
+## Billing Order
 
-Every API call has a cost based on:
-1. **Character Count** (Input text length)
-2. **Voice model** (Base or Advanced)
-3. **Your Plan** (Basic, Starter, or Pro rates)
+When both balances are available, Audixa uses:
 
-<Info>
-  New accounts receive **$0.10 in free balance** to get started on the Basic plan.
-</Info>
+1. **Monthly balance** included with the subscription.
+2. **Top-up balance** purchased separately.
 
-## Cost Example
+Monthly balance resets on the subscription billing cycle and unused monthly
+funds do not roll over.
 
-<Tabs>
-  <Tab title="Basic Plan">
-    **Scenario:** Generate 10,000 characters using **Base Model**.
-    
-    **Calculation:** (10,000 / 1,000) * $0.001 = $0.01
-  </Tab>
-  <Tab title="Starter Plan">
-    **Scenario:** Generate 10,000 characters using **Advanced Model**.
-    
-    **Calculation:** (10,000 / 1,000) * $0.04 = $0.40
-  </Tab>
-</Tabs>
+## Top-Up Expiry
+
+Top-up expiry depends on subscription status:
+
+- While a subscription is active, the expiry clock for remaining top-up grants
+  is paused.
+- Without an active subscription, remaining top-up grants expire after **30
+  days**. This applies to top-ups purchased without a subscription and to funds
+  remaining after a subscription ends.
+- Starting a subscription again pauses the clock on active, unexpired grants.
+
+The Billing page displays the current expiry state and the next applicable
+expiry date returned by the backend.
 
 ## Checking Your Balance
 
-Your available balance (Monthly + Topup) is visible in the [Audixa Dashboard](https://audixa.ai/dashboard).
-
-<Warning>
-  Balance details are not exposed via the API. Use the dashboard to monitor your usage.
-</Warning>
+Open [Dashboard → Billing](https://audixa.ai/app/billing) to review monthly and
+top-up balances, current plan facts, payments, and generation charges.
 
 ## Insufficient Balance
 
-When your balance runs out, API requests return a `402 Payment Required` error:
+If the available monthly and top-up balances cannot cover the request, the API
+returns `402 Payment Required` and does not queue the generation.
 
 <ResponseExample>
 ```json 402 Payment Required
 {
-  "detail": "Insufficient Balance"
+  "detail": "Insufficient balance. Cost: $0.0120, wallet: $0.00, topup: $0.00"
 }
 ```
 </ResponseExample>
 
-### Handling This Error
+Handle the HTTP status directly rather than depending on an Audixa-specific SDK:
 
 <CodeGroup>
 ```python Python
-from audixa.exceptions import InsufficientBalanceError
+response = requests.post(API_URL, headers=headers, json=payload, timeout=30)
 
-try:
-    audio_url = audixa.tts_and_wait(
-        "Hello!",
-        voice_id="am_ethan",
-    )
-except InsufficientBalanceError:
-    print("Insufficient balance. Please add funds at https://audixa.ai/dashboard/billing")
-```
+if response.status_code == 402:
+    raise RuntimeError("Insufficient balance; open https://audixa.ai/app/billing")
 
-```typescript TypeScript
-import Audixa, { AudixaError } from 'audixa';
-
-const audixa = new Audixa('YOUR_API_KEY');
-
-try {
-  const audioUrl = await audixa.generateTTS({
-    text: 'Hello!',
-    voice_id: 'am_ethan',
-    model: 'base'
-  });
-} catch (error) {
-  if (error instanceof AudixaError && error.code === 'INSUFFICIENT_BALANCE') {
-    console.log('Insufficient balance. Please add funds.');
-  }
-}
+response.raise_for_status()
 ```
 
 ```javascript JavaScript
-import Audixa, { AudixaError } from 'audixa';
+const response = await fetch(API_URL, {
+  method: 'POST',
+  headers,
+  body: JSON.stringify(payload)
+});
 
-const audixa = new Audixa('YOUR_API_KEY');
-
-try {
-  const audioUrl = await audixa.generateTTS({
-    text: 'Hello!',
-    voice_id: 'am_ethan',
-    model: 'base'
-  });
-} catch (error) {
-  if (error instanceof AudixaError && error.code === 'INSUFFICIENT_BALANCE') {
-    console.log('Insufficient balance. Please add funds.');
-  }
+if (response.status === 402) {
+  throw new Error('Insufficient balance; open https://audixa.ai/app/billing');
 }
+
+if (!response.ok) throw new Error(await response.text());
 ```
 </CodeGroup>
 
-## Adding Funds
+## Adding Funds or Subscribing
 
-To add funds:
-
-1. Go to [Dashboard → Billing](https://audixa.ai/dashboard/billing)
-2. Choose a top-up amount or subscription
-3. Complete the payment
+1. Go to [Dashboard → Billing](https://audixa.ai/app/billing).
+2. Choose a top-up of at least $10 or select a subscription.
+3. Review the displayed amount and terms, then complete checkout.
 
 <CardGroup cols={2}>
-  <Card title="Pay-As-You-Go" icon="credit-card">
-    Add funds as needed. Your topup balance never expires.
+  <Card title="Top-Up" icon="credit-card">
+    Add purchased balance as needed. Its expiry follows the subscription-status
+    policy above.
   </Card>
   <Card title="Subscription" icon="calendar">
-    Monthly plans with better rates, automatic balance refills, and volume discounts.
+    Receive the monthly balance, rates, and limits shown for the selected plan.
   </Card>
 </CardGroup>
-
-## Usage Tracking
-
-The dashboard provides detailed usage analytics:
-
-- Daily/weekly/monthly spending
-- Usage by voice and model
-- API call history
-- Cost projections
-
-<Card title="View Usage Dashboard" icon="chart-line" href="https://audixa.ai/dashboard">
-  Track your spending and API usage patterns.
-</Card>

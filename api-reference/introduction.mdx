@@ -15,7 +15,7 @@ https://api.audixa.ai/v3
 
 ## Authentication
 
-All endpoints require authentication via the `x-api-key` header:
+Authenticated endpoints accept an API key in the `X-API-Key` header:
 
 ```bash
 -H "x-api-key: YOUR_API_KEY"
@@ -25,18 +25,27 @@ All endpoints require authentication via the `x-api-key` header:
   See the Authentication guide for details on obtaining and using API keys.
 </Card>
 
-## Official SDKs
+`Authorization: Bearer YOUR_API_KEY` is also accepted. Keep API keys in
+server-side secrets and never ship them in public browser code.
 
-We interpret your request using our official open-source SDKs for Python and Node.js:
+## Language Examples
+
+No Audixa SDK package is required. The language guides use the REST API directly:
 
 <CardGroup cols={2}>
-  <Card title="Python SDK" icon="python" href="https://github.com/Audixa/audixa-python">
-    `pip install audixa`
+  <Card title="Python requests" icon="python" href="/sdks/python">
+    Create and poll generations with `requests`.
   </Card>
-  <Card title="Node.js SDK" icon="node" href="https://github.com/Audixa/audixa-node">
-    `npm install audixa`
+  <Card title="JavaScript fetch" icon="node" href="/sdks/nodejs">
+    Use the native `fetch` API in a server runtime.
   </Card>
 </CardGroup>
+
+<Info>
+  Fixed voice previews are available at
+  [audixa.ai/voices](https://audixa.ai/voices). Creating a dashboard or API
+  generation requires a minimum $10 top-up or an active subscription.
+</Info>
 
 ## Async Workflow
 
@@ -48,7 +57,7 @@ sequenceDiagram
     participant Audixa API
     participant CDN
     
-    Client->>Audixa API: POST /v3/tts (text, voice, model)
+    Client->>Audixa API: POST /v3/tts (text, voice_id, model, audio_format)
     Audixa API-->>Client: 200 OK {generation_id, status: "IN_QUEUE"}
     
     loop Poll until complete
@@ -63,7 +72,9 @@ sequenceDiagram
 
 <Steps>
   <Step title="Submit TTS Request">
-    POST to `/v3/tts` with your text, voice, and model. Receive a `generation_id` and initial status `IN_QUEUE`.
+    POST to `/v3/tts` with non-empty text, a compatible `voice_id`,
+    `model`, and `audio_format`. Receive a `generation_id` and initial status `IN_QUEUE`.
+    Each generation is billed for at least 30 characters (8 tokens).
   </Step>
   <Step title="Poll Status">
     GET `/v3/tts` with your `generation_id` until status is `COMPLETED`.
@@ -115,7 +126,7 @@ All responses are JSON. Successful responses return status `2xx` with the reques
 
 <CardGroup cols={2}>
   <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Get your first audio in 5 minutes.
+    Create and poll an authenticated generation.
   </Card>
   <Card title="Error Codes" icon="circle-exclamation" href="/guides/error-codes">
     Understand and handle API errors.
@@ -123,7 +134,7 @@ All responses are JSON. Successful responses return status `2xx` with the reques
   <Card title="Rate Limits" icon="gauge" href="/guides/rate-limits">
     Learn about request limits and best practices.
   </Card>
-  <Card title="Pricing" icon="coins" href="/guides/pricing-credits">
-    Understand credit-based billing.
+  <Card title="Pricing" icon="coins" href="/guides/pricing">
+    Understand paid generation and wallet expiry.
   </Card>
 </CardGroup>

@@ -12,12 +12,11 @@ The dashboard uses a grid layout to show your most important financial data at a
 ### 1. Total Available Balance
 The large card shows your **Total Available Balance**, which is the sum of your:
 - **Monthly Balance:** Included with your plan (resets monthly).
-- **Topup Balance:** Purchased separately (never expires).
+- **Top-up Balance:** Purchased separately. Expiry depends on subscription status.
 
 ### 2. Add Funds (Topup)
 You can add funds to your **Topup Balance** at any time. This balance is used when your monthly balance runs out, ensuring uninterrupted service.
 
-- **Pre-set Amounts:** $10, $25, $50, $100.
 - **Custom Amount:** Enter any amount between $10 and $1,000.
 - **Payment:** Securely processed via our payment provider.
 
@@ -42,25 +41,26 @@ Click the **Manage Subscription** button on your active plan card to open the su
 
 Audixa uses a **Dual Wallet System**:
 1. **Monthly Balance:** Consumed first. Resets on your billing cycle. Unused amounts do NOT roll over.
-2. **Topup Balance:** Consumed only after Monthly Balance is exhausted. Carries over indefinitely.
+2. **Top-up Balance:** Consumed only after Monthly Balance is exhausted. Its expiry clock is paused while a subscription is active. Without an active subscription, remaining top-up grants expire after 30 days.
+
+If a subscription ends, the 30-day clock starts for remaining top-up grants. A
+new active subscription pauses the clock again for grants that have not expired.
+Use the expiry date shown in Billing as the account-specific source of truth.
 
 ## Billing History
 The bottom section contains tabs for:
 - **Payments:** History of your subscription charges and top-ups.
 - **Generations:** Detailed log of balance usage per generation.
 
-## Plan & Support Levels
+## Current Plan Facts
 
-| Plan | Support Level |
-| :--- | :--- |
-| **Basic** | Community Support |
-| **Starter** | Community Support |
-| **Pro** | **Priority Support** |
-| **Enterprise** | **Priority Support + Dedicated Manager** |
+Rates, balances, generation limits, and commercial support terms can vary by
+plan. Review the plan card in Billing and the current
+[Pricing page](https://audixa.ai/pricing) instead of relying on a static matrix.
 
 <CardGroup cols={2}>
   <Card title="Upgrade Plan" icon="arrow-up" href="https://audixa.ai/pricing">
-     Unlock lower rates and priority support.
+     Compare the currently available balances, rates, limits, and terms.
   </Card>
   <Card title="Contact Support" icon="headset" href="mailto:support@audixa.ai">
     Reach out to our team.

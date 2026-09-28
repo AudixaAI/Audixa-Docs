@@ -1,174 +1,75 @@
 ---
 title: "AI Models"
-description: "Compare Base and Advanced models to choose the right one for your needs"
+description: "Compare the request controls and voice compatibility of Base and Advanced"
 ---
 
-Audixa AI offers two powerful text-to-speech models to suit different needs: **Base** and **Advanced**. Each model is optimized for a different set of use cases, from general-purpose narration to highly expressive, custom voice generation.
-
-Understanding the differences will help you choose the best model for your application.
+Audixa accepts `base` and `advanced` as the TTS `model`. Model selection changes
+the compatible voice set, language-code scheme, controls, and plan rate. It does
+not override the requirement that `voice_id` must match the selected model.
 
 ## Base Model
 
-The Base model is the perfect choice for a wide range of applications. It is designed for reliability, speed, and high-quality audio output across a large and diverse voice library.
+Base requests support:
 
-<CardGroup cols={3}>
-  <Card title="54 Voices" icon="users">
-    Extensive library spanning various accents, genders, and styles.
-  </Card>
-  <Card title="High Quality" icon="waveform-lines">
-    Clear, natural-sounding speech for narration and content creation.
-  </Card>
-  <Card title="Simple" icon="rocket">
-    Easy to use with straightforward API parameters.
-  </Card>
-</CardGroup>
+- Base-compatible system voices returned by `GET /v3/voices?model=base`.
+- `speed` from `0.5` to `2.0`.
+- Single-letter `language_code` values.
+- `wav` or `mp3` output.
 
-For the majority of users, the Base model provides more than enough variety and quality to build incredible audio experiences.
+```json
+{
+  "text": "This Base request demonstrates the documented delivery controls.",
+  "voice_id": "am_ethan",
+  "model": "base",
+  "speed": 1.1,
+  "language_code": "a",
+  "audio_format": "mp3"
+}
+```
 
 ## Advanced Model
 
-The Advanced model is built for users who require the highest level of customization, expressiveness, and unique vocal identity. While it has a smaller library of preset voices, its power lies in its advanced features.
+Advanced requests support:
 
-<CardGroup cols={2}>
-  <Card title="Voice Cloning" icon="clone">
-    Create a digital replica of any voice from a short audio sample.
-  </Card>
-  <Card title="Custom Voices" icon="wand-magic-sparkles">
-    Design unique, high-quality synthetic voices tailored to your brand.
-  </Card>
-  <Card title="Superior Expressiveness" icon="face-smile">
-    Fine-tuned for more nuanced and emotionally resonant speech.
-  </Card>
-  <Card title="Greater Customization" icon="sliders">
-    Detailed control over expressiveness settings like `cfg_weight` and `exaggeration`.
-  </Card>
-</CardGroup>
+- Advanced-compatible system and account-owned custom voices.
+- `cfg_weight` from `1.0` to `5.0`.
+- `exaggeration` from `0.0` to `1.0`.
+- Advanced model language codes such as `en`, `de`, or `ja`.
+- `wav` or `mp3` output.
 
-The Advanced model is ideal for enterprises, creators, and developers who need a signature voice or the flexibility of voice cloning.
-
-## Side-by-Side Comparison
-
-| Feature | Base Model | Advanced Model |
-|---------|------------|---------------|
-| **Preset Voices** | ✅ 54 Voices | ⚪️ Fewer (Focus on custom) |
-| **Voice Cloning** | ❌ Not Supported | ✅ Supported |
-| **Custom Voices** | ❌ Not Supported | ✅ Supported |
-| **Expressiveness Control** | ❌ Not Supported | ✅ Supported |
-| **Quality** | High Quality & Natural | Highest Quality & Nuanced |
-| **Best For** | General applications | Branding, custom experiences |
-| **API Parameter** | `"base"` | `"advanced"` |
-| **Cost** | [See Pricing](/guides/pricing) | [See Pricing](/guides/pricing) |
-
-## Specifying a Model in Your API Request
-
-To use a specific model, set the `model` parameter in your API request:
-
-<Tabs>
-  <Tab title="Base Model">
 ```json
 {
-  "text": "Hello, this is a voice from the Base model.",
-  "voice_id": "am_ethan",
-  "model": "base"
-}
-```
-  </Tab>
-  <Tab title="Advanced Model">
-```json
-{
-  "text": "Hello, this is a voice from the Advanced model.",
-  "voice_id": "am_ethan",
+  "text": "This Advanced request demonstrates its two guidance controls.",
+  "voice_id": "YOUR_ADVANCED_VOICE_ID",
   "model": "advanced",
   "cfg_weight": 3.5,
-  "exaggeration": 0.7
+  "exaggeration": 0.7,
+  "language_code": "en",
+  "audio_format": "mp3"
 }
 ```
-  </Tab>
-</Tabs>
 
-### SDK Examples
+## Side-by-Side Contract
 
-<CodeGroup>
-```python Python
-import audixa
+| Capability | Base | Advanced |
+|---|---|---|
+| Request value | `model: "base"` | `model: "advanced"` |
+| Delivery controls | `speed` | `cfg_weight`, `exaggeration` |
+| Language codes | Single-letter scheme | Model-supported ISO-style codes |
+| Audio formats | `wav`, `mp3` | `wav`, `mp3` |
+| Compatible voices | Base voices | Advanced and compatible custom voices |
+| Rate and text limit | Set by current plan | Set by current plan |
 
-audixa.set_api_key("YOUR_API_KEY")
+## Choose a Model
 
-# Using Base model
-audio_url = audixa.tts_and_wait(
-    "Hello from the Base model.",
-    voice_id="am_ethan",
-    model="base",
-)
+1. List voices for the intended model.
+2. Select a returned `voice_id`.
+3. Use only controls accepted for that model.
+4. Review the current rate and limits in
+   [Billing](https://audixa.ai/app/billing) or on
+   [Pricing](https://audixa.ai/pricing).
 
-# Using Advanced model with expressiveness settings
-audio_url = audixa.tts_and_wait(
-    "Hello from the Advanced model!",
-    voice_id="am_ethan",
-    model="advanced",
-    cfg_weight=3.5,
-    exaggeration=0.7,
-)
-```
-
-```typescript TypeScript
-import Audixa from 'audixa';
-
-const audixa = new Audixa('YOUR_API_KEY');
-
-// Using Base model
-const baseAudio = await audixa.generateTTS({
-  text: 'Hello from the Base model.',
-  voice_id: 'am_ethan',
-  model: 'base'
-});
-
-// Using Advanced model with expressiveness settings
-const advancedAudio = await audixa.generateTTS({
-  text: 'Hello from the Advanced model!',
-  voice_id: 'am_ethan',
-  model: 'advanced',
-  cfg_weight: 3.5,
-  exaggeration: 0.7
-});
-```
-
-```javascript JavaScript
-import Audixa from 'audixa';
-
-const audixa = new Audixa('YOUR_API_KEY');
-
-// Using Base model
-const baseAudio = await audixa.generateTTS({
-  text: 'Hello from the Base model.',
-  voice_id: 'am_ethan',
-  model: 'base'
-});
-
-// Using Advanced model with expressiveness settings
-const advancedAudio = await audixa.generateTTS({
-  text: 'Hello from the Advanced model!',
-  voice_id: 'am_ethan',
-  model: 'advanced',
-  cfg_weight: 3.5,
-  exaggeration: 0.7
-});
-```
-</CodeGroup>
-
-## Which Model Should I Use?
-
-<CardGroup cols={2}>
-  <Card title="Choose Base If..." icon="check">
-    - You need a wide variety of preset voices
-    - Cost efficiency is important
-    - Standard narration and content creation
-    - Quick implementation without customization
-  </Card>
-  <Card title="Choose Advanced If..." icon="star">
-    - You need voice cloning capabilities
-    - Creating a unique brand voice
-    - Emotional and expressive content
-    - Maximum control over output
-  </Card>
-</CardGroup>
+<Warning>
+  A Base voice cannot be used with `model: "advanced"`, and an Advanced voice
+  cannot be used with `model: "base"`. The API rejects mismatched requests.
+</Warning>

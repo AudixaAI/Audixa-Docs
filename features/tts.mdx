@@ -2,11 +2,11 @@
 title: "Text To Speech"
 ---
 
-The **Text-to-Speech** dashboard allows you to convert text into natural-sounding speech using Audixa's state-of-the-art AI models.
+The **Text-to-Speech** dashboard submits paid audio generations through Audixa's Base and Advanced models.
 
 ## The Generation Workflow
 
-1. **Select Your Model:** Choose between the **Base Model** for speed and reliability, or the **Advanced Model** for higher quality and expressiveness.
+1. **Select Your Model:** Choose **Base** for its speed control or **Advanced** for `cfg_weight` and `exaggeration` controls.
 2. **Choose Your Voice:** Pick from our extensive library of preset voices or use your own **Clone Voices**.
 3. **Enter Your Text:** Type or paste your script.
 4. **Settings (Optional):** Adjust speed, language, or advanced controls.
@@ -16,8 +16,8 @@ The **Text-to-Speech** dashboard allows you to convert text into natural-soundin
 
 You can switch between two models depending on your needs:
 
-- **Base Model:** Best for general-purpose use. Optimized for speed and reliability.
-- **Advanced Model:** Offers HD voices and advanced expressiveness controls. Required for using **Clone Voices**.
+- **Base Model:** Uses Base-compatible voices and exposes speed control.
+- **Advanced Model:** Uses Advanced-compatible voices and exposes guidance and expressiveness controls. Required for **Clone Voices**.
 
 ## Quick Presets
 
@@ -37,6 +37,9 @@ Click the voice selector to open the Voice Modal. You can filter by:
 - **Gender** (Male, Female, Neutral)
 - **Free Voices**
 
+The “Free Voices” label is a voice-access classification used by plan rules. It
+does not make a generation free.
+
 ### Base Model Settings
 When the Base Model is selected, you can adjust:
 - **Language:** Select from available languages (e.g., American English).
@@ -53,7 +56,7 @@ These settings provide granular control over the vocal performance and are only 
 ### Output Format
 Choose your preferred file format:
 - **MP3:** Compressed, smaller file size (standard).
-- **WAV:** Uncompressed, lossless quality.
+- **WAV:** Uncompressed output.
 
 ---
 

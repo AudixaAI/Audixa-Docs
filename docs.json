@@ -41,7 +41,7 @@
             ]
           },
           {
-            "group": "SDKs",
+            "group": "Language Examples",
             "pages": [
               "sdks/python",
               "sdks/nodejs"

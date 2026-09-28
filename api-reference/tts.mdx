@@ -13,7 +13,9 @@ POST https://api.audixa.ai/v3/tts
 ## Request
 
 <ParamField body="text" type="string" required>
-  The text to convert to speech. Maximum 50,000 characters (varies by plan).
+  The text to convert to speech. At least 1 character is required. Each generation
+  is billed for at least 30 characters (8 tokens), even for shorter text. The maximum is set by
+  the active plan and cannot exceed the API schema maximum of 50,000 characters.
 </ParamField>
 
 <ParamField body="voice_id" type="string" required>
@@ -22,8 +24,8 @@ POST https://api.audixa.ai/v3/tts
 
 <ParamField body="model" type="string" default="base">
   The model tier to use.
-  - `base`: Standard high-quality voices. Lowest cost/latency.
-  - `advanced`: Premium voices. Supports cloning and higher expressiveness.
+  - `base`: Supports `speed` and Base-compatible voices.
+  - `advanced`: Supports `cfg_weight`, `exaggeration`, and Advanced-compatible voices.
 </ParamField>
 
 <ParamField body="speed" type="number" default="1.0">
@@ -90,7 +92,7 @@ POST https://api.audixa.ai/v3/tts
 </ResponseField>
 
 <ResponseField name="dollar_cost" type="number">
-  Cost in USD (set when generation completes).
+  Server-calculated cost in USD for the accepted generation.
 </ResponseField>
 
 <ResponseField name="method" type="string">
@@ -125,7 +127,7 @@ curl -X POST "https://api.audixa.ai/v3/tts" \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{
-    "text": "Hello world from Audixa!",
+    "text": "Hello from Audixa. This request is long enough for generation.",
     "voice_id": "am_ethan",
     "model": "base",
     "speed": 1.0,
@@ -134,76 +136,42 @@ curl -X POST "https://api.audixa.ai/v3/tts" \
   }'
 ```
 
-```python Python
-import audixa
+```python Python requests
+import requests
 
-audixa.set_api_key("YOUR_API_KEY")
-
-# Asynchronous generation (returns immediately)
-generation_id = audixa.tts(
-    "Hello world from Audixa!",
-    voice_id="am_ethan",
-    model="base",
+response = requests.post(
+    "https://api.audixa.ai/v3/tts",
+    headers={"X-API-Key": "YOUR_API_KEY"},
+    json={
+        "text": "Hello from Audixa. This request is long enough for generation.",
+        "voice_id": "am_ethan",
+        "model": "base",
+        "audio_format": "wav",
+    },
+    timeout=30,
 )
-print(f"Generation ID: {generation_id}")
-
-# Or generate and wait for completion
-audio_url = audixa.tts_and_wait(
-    "Hello world from Audixa!",
-    voice_id="am_ethan",
-)
-
-# Advanced model in a non-English language
-audio_url = audixa.tts_and_wait(
-    "Hallo, willkommen bei Audixa!",
-    voice_id="am_ethan",
-    model="advanced",
-    language_code="de",
-)
+response.raise_for_status()
+generation = response.json()
+print(generation["generation_id"], generation["status"])
 ```
 
-```typescript TypeScript
-import Audixa from 'audixa';
-
-const audixa = new Audixa('YOUR_API_KEY');
-
-// Asynchronous generation
-const { generation_id } = await audixa.startTTS({
-  text: 'Hello world from Audixa!',
-  voice_id: 'am_ethan',
-  model: 'base'
+```javascript JavaScript fetch
+const response = await fetch('https://api.audixa.ai/v3/tts', {
+  method: 'POST',
+  headers: {
+    'X-API-Key': 'YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    text: 'Hello from Audixa. This request is long enough for generation.',
+    voice_id: 'am_ethan',
+    model: 'base',
+    audio_format: 'wav'
+  })
 });
-console.log('Generation ID:', generation_id);
-
-// Or generate and wait (convenience method)
-const audioUrl = await audixa.generateTTS({
-  text: 'Hello world from Audixa!',
-  voice_id: 'am_ethan',
-  model: 'base'
-});
-console.log('Audio URL:', audioUrl);
-```
-
-```javascript JavaScript
-import Audixa from 'audixa';
-
-const audixa = new Audixa('YOUR_API_KEY');
-
-// Asynchronous generation
-const { generation_id } = await audixa.startTTS({
-  text: 'Hello world from Audixa!',
-  voice_id: 'am_ethan',
-  model: 'base'
-});
-console.log('Generation ID:', generation_id);
-
-// Or generate and wait (convenience method)
-const audioUrl = await audixa.generateTTS({
-  text: 'Hello world from Audixa!',
-  voice_id: 'am_ethan',
-  model: 'base'
-});
-console.log('Audio URL:', audioUrl);
+if (!response.ok) throw new Error(await response.text());
+const generation = await response.json();
+console.log(generation.generation_id, generation.status);
 ```
 </RequestExample>
 
@@ -212,7 +180,7 @@ console.log('Audio URL:', audioUrl);
 {
   "generation_id": "gen_abc123xyz",
   "status": "IN_QUEUE",
-  "input_text": "Hello world from Audixa!",
+  "input_text": "Hello from Audixa. This request is long enough for generation.",
   "voice_id": "am_ethan",
   "voice_name": "Ethan",
   "model": "base",

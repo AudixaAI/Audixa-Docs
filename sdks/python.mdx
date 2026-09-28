@@ -1,434 +1,212 @@
 ---
-title: "Python SDK"
-description: "Official Python SDK for the Audixa text-to-speech API"
+title: "Python REST Guide"
+description: "Call the Audixa Text-to-Speech API with Python requests"
 ---
 
-The Audixa Python SDK provides both synchronous and asynchronous clients for the Audixa text-to-speech API, with built-in retry logic and comprehensive error handling.
+Audixa does not require or publish a Python SDK package. This guide uses the
+general-purpose `requests` library against the documented REST endpoints.
+
+## Requirements
+
+- Python 3.
+- An Audixa API key created in [Developers](https://audixa.ai/app/developers#api-keys).
+- A minimum $10 top-up or an active subscription.
 
 ## Installation
 
 ```bash
-pip install audixa
+python -m pip install requests
 ```
 
-For async support (file saving):
+Set your API key outside the source file:
 
 ```bash
-pip install audixa aiofiles
+export AUDIXA_API_KEY="YOUR_API_KEY"
 ```
 
 ## Quick Start
 
-### Synchronous (Simple)
-
 ```python
-import audixa
+import os
+import time
+import requests
 
-audixa.set_api_key("YOUR_API_KEY")
+API_URL = "https://api.audixa.ai/v3/tts"
+API_KEY = os.environ["AUDIXA_API_KEY"]
+HEADERS = {"X-API-Key": API_KEY}
 
-# Generate TTS and wait for completion → returns audio URL
-audio_url = audixa.tts_and_wait(
-    "Hello! Welcome to Audixa, the best text-to-speech API.",
-    voice_id="am_ethan",
-)
-print(f"Audio URL: {audio_url}")
 
-# Save directly to file
-audixa.tts_to_file(
-    "Hello! Welcome to Audixa.",
-    "output.wav",
-    voice_id="am_ethan",
-)
-```
-
-### Asynchronous
-
-```python
-import asyncio
-import audixa
-
-audixa.set_api_key("YOUR_API_KEY")
-
-async def main():
-    # Async generate and wait
-    audio_url = await audixa.atts_and_wait(
-        "Hello from async Audixa!",
-        voice_id="am_ethan",
-        model="base",
+def start_tts(payload):
+    response = requests.post(
+        API_URL,
+        headers=HEADERS,
+        json=payload,
+        timeout=30,
     )
-    print(f"Audio URL: {audio_url}")
+    response.raise_for_status()
+    return response.json()
 
-    # Async save to file
-    await audixa.atts_to_file(
-        "Hello from async Audixa!",
-        "output.wav",
-        voice_id="am_ethan",
+
+def get_status(generation_id):
+    response = requests.get(
+        API_URL,
+        headers=HEADERS,
+        params={"generation_id": generation_id},
+        timeout=30,
     )
+    response.raise_for_status()
+    return response.json()
 
-asyncio.run(main())
+
+def generate_tts(payload, poll_interval=2):
+    generation = start_tts(payload)
+
+    while generation["status"] not in {"COMPLETED", "FAILED"}:
+        time.sleep(poll_interval)
+        generation = get_status(generation["generation_id"])
+
+    if generation["status"] == "FAILED":
+        raise RuntimeError(generation.get("error_message") or "Generation failed")
+    return generation
+
+
+result = generate_tts({
+    "text": "Hello from Audixa. This request is long enough to generate speech.",
+    "voice_id": "am_ethan",
+    "model": "base",
+    "audio_format": "mp3",
+})
+
+print(result["audio_url"])
 ```
 
-## Configuration
+## Request Contract
 
-### Global Configuration
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `text` | `str` | Yes | At least 1 character; minimum charge is 30 characters (8 tokens); maximum length depends on the active plan |
+| `voice_id` | `str` | Yes | Accessible voice compatible with the selected model |
+| `model` | `str` | No | `base` or `advanced`; defaults to `base` |
+| `audio_format` | `str` | No | `wav` or `mp3`; defaults to `wav` |
+| `speed` | `float` | No | Delivery multiplier from 0.5 to 2.0 |
+| `cfg_weight` | `float` | No | Advanced model guidance from 1.0 to 5.0 |
+| `exaggeration` | `float` | No | Advanced model expressiveness from 0.0 to 1.0 |
+| `language_code` | `str` | No | Model-specific language code |
 
-```python
-import audixa
+## Model Controls
 
-# API key (required)
-audixa.set_api_key("YOUR_API_KEY")
+The selected voice must be compatible with the requested model. Query
+`GET /v3/voices?model=base` or `GET /v3/voices?model=advanced` before selecting
+a voice ID.
 
-# Custom base URL (optional)
-audixa.set_base_url("https://api.audixa.ai/v3")
-
-# Custom endpoint slug (optional)
-audixa.set_custom_endpoint_slug("my-custom-slug")
+```python Base request
+payload = {
+    "text": "This Base model request demonstrates the optional speed control.",
+    "voice_id": "am_ethan",
+    "model": "base",
+    "speed": 1.1,
+    "audio_format": "wav",
+    "language_code": "a",
+}
 ```
 
-### Client-Based Configuration
-
-```python
-from audixa import AudixaClient, AsyncAudixaClient
-
-# Synchronous client
-client = AudixaClient(
-    api_key="YOUR_API_KEY",
-    base_url="https://api.audixa.ai/v3",   # Optional
-    timeout=30,                              # Request timeout in seconds
-    max_retries=3,                           # Retry count (default: 3)
-    custom_endpoint_slug="my-slug",          # Optional
-)
-
-# Asynchronous client
-async_client = AsyncAudixaClient(
-    api_key="YOUR_API_KEY",
-    timeout=30,
-    max_retries=3,
-)
+```python Advanced request
+payload = {
+    "text": "This Advanced model request demonstrates its guidance controls.",
+    "voice_id": "YOUR_ADVANCED_VOICE_ID",
+    "model": "advanced",
+    "cfg_weight": 3.5,
+    "exaggeration": 0.7,
+    "audio_format": "mp3",
+    "language_code": "en",
+}
 ```
 
-## Using Models
+## Language Codes
 
-### Base Model
-
-The Base model provides fast, high-quality TTS with 54+ voices:
-
-```python
-audio_url = audixa.tts_and_wait(
-    "Clear and professional speech with the Base model.",
-    voice_id="am_ethan",
-    model="base",
-    speed=1.0,              # 0.5 to 2.0
-    audio_format="wav",     # "wav" or "mp3"
-)
-```
-
-### Advanced Model
-
-The Advanced model supports voice cloning and expressiveness controls:
-
-```python
-audio_url = audixa.tts_and_wait(
-    "Expressive speech with the Advanced model!",
-    voice_id="am_ethan",
-    model="advanced",
-    cfg_weight=3.5,       # Guidance strength: 1.0–5.0 (default: 2.5)
-    exaggeration=0.7,     # Expressiveness: 0.0–1.0 (default: 0.5)
-    audio_format="mp3",   # "wav" or "mp3"
-    language_code="en",   # ISO 639-1 code (see "Language Codes" below)
-)
-```
-
-### Language Codes
-
-Both models accept an optional `language_code` argument that tells the
-synthesiser which language the input text is in. The Admin panel uses this
-under the hood, and the SDK exposes it as a first-class parameter on every
-TTS function (`tts`, `tts_and_wait`, `tts_to_file`, and their async variants).
-
-The two models use different code schemes:
-
-```python
-# Base model — single-letter codes
-audixa.tts_and_wait(
-    "Bonjour, bienvenue chez Audixa.",
-    voice_id="ff_siwis",
-    model="base",
-    language_code="f",   # 'f' = French
-)
-
-# Advanced model — ISO 639-1 codes
-audixa.tts_and_wait(
-    "こんにちは、Audixaへようこそ。",
-    voice_id="am_ethan",
-    model="advanced",
-    language_code="ja",  # 'ja' = Japanese
-)
-```
+The two models use different language-code schemes:
 
 <Tabs>
   <Tab title="Base model codes">
     | Code | Language |
-    |------|----------|
-    | `a`  | American English |
-    | `b`  | British English |
-    | `j`  | Japanese |
-    | `z`  | Mandarin Chinese |
-    | `e`  | Spanish |
-    | `f`  | French |
-    | `h`  | Hindi |
-    | `i`  | Italian |
-    | `p`  | Brazilian Portuguese |
+    |---|---|
+    | `a` | American English |
+    | `b` | British English |
+    | `j` | Japanese |
+    | `z` | Mandarin Chinese |
+    | `e` | Spanish |
+    | `f` | French |
+    | `h` | Hindi |
+    | `i` | Italian |
+    | `p` | Brazilian Portuguese |
   </Tab>
-  <Tab title="Advanced model codes (ISO 639-1)">
-    | Code | Language | Code | Language |
-    |------|----------|------|----------|
-    | `en` | English  | `nl` | Dutch    |
-    | `ar` | Arabic   | `no` | Norwegian |
-    | `da` | Danish   | `pl` | Polish   |
-    | `de` | German   | `pt` | Portuguese |
-    | `el` | Greek    | `ru` | Russian  |
-    | `es` | Spanish  | `sv` | Swedish  |
-    | `fi` | Finnish  | `sw` | Swahili  |
-    | `fr` | French   | `tr` | Turkish  |
-    | `he` | Hebrew   | `zh` | Chinese  |
-    | `hi` | Hindi    | `ja` | Japanese |
-    | `it` | Italian  | `ko` | Korean   |
-    | `ms` | Malay    |      |          |
+  <Tab title="Advanced model codes">
+    `en`, `ar`, `da`, `de`, `el`, `es`, `fi`, `fr`, `he`, `hi`, `it`, `ja`,
+    `ko`, `ms`, `nl`, `no`, `pl`, `pt`, `ru`, `sv`, `sw`, `tr`, `zh`
   </Tab>
 </Tabs>
 
-<Note>
-If you omit `language_code`, the model falls back to its default (English).
-The code must match a language supported by the chosen `model`; using an
-Advanced-only code with `model="base"` (or vice-versa) will produce
-unexpected pronunciation.
-</Note>
+If `language_code` is omitted, the model uses its default language. A code from
+the wrong scheme can produce incorrect pronunciation.
 
-## API Reference — Module-Level Functions
-
-### Synchronous Functions
-
-These use the global API key set via `audixa.set_api_key()`.
-
-| Function | Description | Returns |
-|----------|-------------|---------|
-| `tts(text, voice_id, ...)` | Start a TTS job (async workflow) | `str` (generation_id) |
-| `status(generation_id)` | Check generation status | `dict` |
-| `tts_and_wait(text, voice_id, ...)` | Generate and wait for completion | `str` (audio_url) |
-| `tts_to_file(text, filepath, voice_id, ...)` | Generate and save to file | `str` (filepath) |
-| `list_voices(model, ...)` | List available voices | `list[dict]` |
-| `history(limit, ...)` | Get generation history | `list[dict]` |
-
-### Asynchronous Functions
-
-| Function | Description | Returns |
-|----------|-------------|---------|
-| `atts(text, voice_id, ...)` | Start a TTS job (async) | `str` (generation_id) |
-| `astatus(generation_id)` | Check generation status | `dict` |
-| `atts_and_wait(text, voice_id, ...)` | Generate and wait | `str` (audio_url) |
-| `atts_to_file(text, filepath, voice_id, ...)` | Generate and save to file | `str` (filepath) |
-| `alist_voices(model, ...)` | List available voices | `list[dict]` |
-| `ahistory(limit, ...)` | Get generation history | `list[dict]` |
-
-### Common Parameters
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `text` | `str` | — | Text to convert (required) |
-| `voice_id` | `str` | — | Voice identifier (required) |
-| `model` | `str` | `"base"` | `"base"` or `"advanced"` |
-| `speed` | `float` | `1.0` | Speed multiplier: 0.5–2.0 |
-| `cfg_weight` | `float` | `None` | Advanced model: guidance strength 1.0–5.0 |
-| `exaggeration` | `float` | `None` | Advanced model: expressiveness 0.0–1.0 |
-| `audio_format` | `str` | `None` | Output format: `"wav"` or `"mp3"` |
-| `language_code` | `str` | `None` | Language of the input text. Base model uses single-letter codes (`a`, `b`, `j`, `z`, `e`, `f`, `h`, `i`, `p`); advanced model uses ISO 639-1 (`en`, `de`, `es`, …). See [Language Codes](#language-codes). |
-| `custom_endpoint_slug` | `str` | `None` | Route to custom endpoint |
-| `poll_interval` | `float` | `1.0` | Seconds between status checks (wait functions) |
-| `timeout` | `float` | `120.0` | Max wait time in seconds (wait functions) |
-
-## Client API Reference
-
-### `AudixaClient` (Synchronous)
+## List Compatible Voices
 
 ```python
-from audixa import AudixaClient
-
-client = AudixaClient(api_key="YOUR_API_KEY")
-
-# Start TTS job
-generation_id = client.tts(
-    "Hello from the client!",
-    voice_id="am_ethan",
-    model="base",
+response = requests.get(
+    "https://api.audixa.ai/v3/voices",
+    headers=HEADERS,
+    params={"model": "base", "limit": 50},
+    timeout=30,
 )
+response.raise_for_status()
 
-# Check status
-result = client.status(generation_id)
-print(result["status"])  # "IN_QUEUE", "GENERATING", "COMPLETED", "FAILED"
-
-# Generate and wait
-audio_url = client.tts_and_wait(
-    "Hello from the client!",
-    voice_id="am_ethan",
-)
-
-# Save to file
-filepath = client.tts_to_file(
-    "Save this audio.",
-    "output.mp3",
-    voice_id="am_ethan",
-    audio_format="mp3",
-)
-
-# List voices
-voices = client.list_voices(model="base")
-for voice in voices:
-    print(f"{voice['name']} ({voice['voice_id']})")
-
-# Get history
-history = client.history(limit=10, status="COMPLETED")
+for voice in response.json()["voices"]:
+    print(voice["voice_id"], voice["name"], voice["model"])
 ```
 
-### `AsyncAudixaClient` (Asynchronous)
+## Download Completed Audio
+
+Only download after the generation status becomes `COMPLETED`:
 
 ```python
-from audixa import AsyncAudixaClient
+audio_response = requests.get(result["audio_url"], timeout=60)
+audio_response.raise_for_status()
 
-async_client = AsyncAudixaClient(api_key="YOUR_API_KEY")
-
-# All methods mirror the sync client with await
-audio_url = await async_client.tts_and_wait(
-    "Hello from async!",
-    voice_id="am_ethan",
-)
-
-# Async save to file
-await async_client.tts_to_file(
-    "Save this audio.",
-    "output.wav",
-    voice_id="am_ethan",
-)
-
-# Async list voices
-voices = await async_client.list_voices(model="advanced")
-
-# Async history
-history = await async_client.history(limit=10)
+with open("output.mp3", "wb") as audio_file:
+    audio_file.write(audio_response.content)
 ```
 
 ## Error Handling
 
-The SDK provides specific exception classes for different error scenarios:
-
 ```python
-from audixa.exceptions import (
-    AudixaError,
-    AuthenticationError,
-    RateLimitError,
-    InsufficientBalanceError,
-    ValidationError,
-    NetworkError,
-    TimeoutError,
-    GenerationError,
-    UnsupportedFormatError,
-)
-
 try:
-    audio_url = audixa.tts_and_wait(
-        "Hello!",
-        voice_id="am_ethan",
-    )
-except AuthenticationError:
-    print("Invalid API key")
-except InsufficientBalanceError:
-    print("Add funds to your account")
-except RateLimitError as e:
-    print(f"Rate limited. Retry after {e.retry_after}s")
-except ValidationError as e:
-    print(f"Invalid input: {e.message}")
-except GenerationError as e:
-    print(f"Generation failed: {e.generation_id}")
-except NetworkError:
-    print("Network connectivity issue")
-except TimeoutError:
-    print("Request timed out")
-except UnsupportedFormatError as e:
-    print(f"Bad format. Supported: {e.supported_formats}")
-except AudixaError as e:
-    print(f"Error ({e.status_code}): {e.message}")
+    result = generate_tts({
+        "text": "This request contains enough text for backend validation.",
+        "voice_id": "am_ethan",
+        "model": "base",
+        "audio_format": "mp3",
+    })
+except requests.HTTPError as error:
+    response = error.response
+    detail = response.json().get("detail", response.text)
+    if response.status_code == 402:
+        print("Add funds or start a subscription:", detail)
+    else:
+        print(f"Audixa HTTP error {response.status_code}: {detail}")
+except RuntimeError as error:
+    print("Generation reached FAILED status:", error)
 ```
 
-### Exception Hierarchy
+| HTTP status | Meaning |
+|---|---|
+| `400` or `422` | Invalid text, voice, model, or parameter value |
+| `401` | Missing or invalid API key |
+| `402` | Available balance cannot cover the request |
+| `403` | The active plan cannot access the requested voice or model |
+| `429` | Request or concurrency limit reached |
+| `500+` | Server-side failure |
 
-| Exception | HTTP Code | Description |
-|-----------|-----------|-------------|
-| `AudixaError` | — | Base exception class |
-| `AuthenticationError` | 401 | Invalid or missing API key |
-| `InsufficientBalanceError` | 402 | Account balance too low |
-| `RateLimitError` | 429 | Rate limit exceeded (has `retry_after`) |
-| `ValidationError` | 400/422 | Invalid parameters |
-| `NetworkError` | — | Network connectivity issue |
-| `TimeoutError` | — | Request or polling timeout |
-| `GenerationError` | — | TTS generation failed (has `generation_id`) |
-| `UnsupportedFormatError` | — | Invalid audio format (has `supported_formats`) |
+## Authentication Safety
 
-## Audio Formats
-
-Both WAV and MP3 formats are supported:
-
-```python
-# WAV output (default, lossless)
-audixa.tts_to_file(
-    "Lossless quality audio.",
-    "output.wav",
-    voice_id="am_ethan",
-)
-
-# MP3 output (compressed, smaller file)
-audixa.tts_to_file(
-    "Compressed audio.",
-    "output.mp3",
-    voice_id="am_ethan",
-    audio_format="mp3",
-)
-```
-
-## Custom Endpoints
-
-Route TTS requests through a custom endpoint:
-
-```python
-# Set globally
-audixa.set_custom_endpoint_slug("my-custom-slug")
-
-# Or per-request
-audio_url = audixa.tts_and_wait(
-    "Using custom endpoint...",
-    voice_id="custom_voice_123",
-    model="advanced",
-    custom_endpoint_slug="my-custom-slug",
-)
-
-# Or via client
-client = AudixaClient(
-    api_key="YOUR_API_KEY",
-    custom_endpoint_slug="my-custom-slug",
-)
-```
-
-## Environment Variables
-
-```bash
-export AUDIXA_API_KEY=your_api_key_here
-```
-
-```python
-import audixa
-
-# Will automatically use AUDIXA_API_KEY env variable
-audio_url = audixa.tts_and_wait(
-    "Hello!",
-    voice_id="am_ethan",
-)
-```
+Keep `AUDIXA_API_KEY` in a secret manager or server environment. Do not commit
+it, print it, include it in exception reports, or expose it to browser code.

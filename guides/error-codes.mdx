@@ -3,7 +3,7 @@ title: "Error Codes"
 description: "HTTP status codes and error responses from the Audixa API"
 ---
 
-The Audixa API uses standard HTTP status codes to indicate the success or failure of requests. This guide documents all possible error responses.
+The Audixa API uses HTTP status codes to indicate the success or failure of requests. Endpoint-specific details can add context to the common responses below.
 
 ## Error Response Format
 
@@ -33,8 +33,7 @@ Some errors may include additional context:
 
 | Code | Status | Description |
 |------|--------|-------------|
-| `200` | OK | Request succeeded (GET requests) |
-| `201` | Created | Resource created successfully (POST /tts) |
+| `200` | OK | Request succeeded, including an accepted `POST /tts` job |
 
 ### Client Error Codes
 
@@ -43,6 +42,7 @@ Some errors may include additional context:
 | `400` | Bad Request | Invalid request parameters |
 | `401` | Unauthorized | Missing or invalid API key |
 | `402` | Payment Required | Insufficient balance |
+| `403` | Forbidden | The active plan cannot access the requested model or voice |
 | `404` | Not Found | Resource not found (e.g., invalid generation_id) |
 | `422` | Unprocessable Entity | Validation error |
 | `429` | Too Many Requests | Rate limit exceeded |
@@ -81,9 +81,10 @@ Returned when request parameters are missing or invalid.
 </ResponseExample>
 
 **Common causes:**
-- Missing required fields (`text`, `voice_id`, `model`)
+- Missing required fields (`text`, `voice_id`)
 - Invalid `model` value (must be `base` or `advanced`)
-- Text exceeds maximum length
+- Empty text or text longer than the active plan limit
+- Voice and model are incompatible
 
 ---
 
@@ -117,7 +118,7 @@ Returned when your account has insufficient balance.
 ```
 </ResponseExample>
 
-**Solution:** Add funds via the [Billing Dashboard](https://audixa.ai/dashboard/billing).
+**Solution:** Add at least $10 or start a subscription in the [Billing Dashboard](https://audixa.ai/app/billing).
 
 ---
 
@@ -135,7 +136,7 @@ Returned when a requested resource doesn't exist.
 
 **Common causes:**
 - Invalid `generation_id` when checking status
-- Generation expired (older than 24 hours)
+- The generation belongs to another account
 
 ---
 
@@ -171,96 +172,31 @@ Returned when an unexpected server error occurs.
 
 ## Error Handling Example
 
-Both SDKs provide typed error classes for robust error handling:
+Handle transport errors directly, then handle the asynchronous `FAILED` status
+while polling:
 
 <CodeGroup>
-```python Python
-import audixa
-from audixa.exceptions import (
-    AudixaError,
-    AuthenticationError,
-    RateLimitError,
-    InsufficientBalanceError,
-)
+```python Python requests
+response = requests.post(API_URL, headers=headers, json=payload, timeout=30)
 
-audixa.set_api_key("YOUR_API_KEY")
+if response.status_code == 429:
+    retry_after = response.headers.get("Retry-After")
+    raise RuntimeError(f"Rate limited; Retry-After={retry_after}")
+if response.status_code == 402:
+    raise RuntimeError("Insufficient balance")
 
-try:
-    audio_url = audixa.tts_and_wait(
-        "Hello from Audixa!",
-        voice_id="am_ethan",
-        model="base",
-    )
-    print("Success:", audio_url)
-except AuthenticationError:
-    print("Authentication failed. Check your API key.")
-except InsufficientBalanceError:
-    print("Insufficient balance. Please add funds.")
-except RateLimitError as e:
-    print(f"Rate limited. Retry after {e.retry_after} seconds.")
-except AudixaError as e:
-    print(f"API Error ({e.status_code}): {e.message}")
+response.raise_for_status()
+generation = response.json()
 ```
 
-```typescript TypeScript
-import Audixa, { AudixaError } from 'audixa';
-
-const audixa = new Audixa('YOUR_API_KEY');
-
-try {
-  const audioUrl = await audixa.generateTTS({
-    text: 'Hello from Audixa!',
-    voice_id: 'am_ethan',
-    model: 'base'
-  });
-  console.log('Success:', audioUrl);
-} catch (error) {
-  if (error instanceof AudixaError) {
-    switch (error.code) {
-      case 'AUTHENTICATION_ERROR':
-        console.log('Authentication failed. Check your API key.');
-        break;
-      case 'INSUFFICIENT_BALANCE':
-        console.log('Insufficient balance. Please add funds.');
-        break;
-      case 'RATE_LIMITED':
-        console.log('Rate limited. Retry later.');
-        break;
-      default:
-        console.log(`Error (${error.statusCode}): ${error.message}`);
-    }
-  }
+```javascript JavaScript fetch
+const response = await fetch(API_URL, options);
+if (response.status === 429) {
+  throw new Error(`Rate limited; Retry-After=${response.headers.get('Retry-After')}`);
 }
-```
+if (response.status === 402) throw new Error('Insufficient balance');
+if (!response.ok) throw new Error(await response.text());
 
-```javascript JavaScript
-import Audixa, { AudixaError } from 'audixa';
-
-const audixa = new Audixa('YOUR_API_KEY');
-
-try {
-  const audioUrl = await audixa.generateTTS({
-    text: 'Hello from Audixa!',
-    voice_id: 'am_ethan',
-    model: 'base'
-  });
-  console.log('Success:', audioUrl);
-} catch (error) {
-  if (error instanceof AudixaError) {
-    switch (error.code) {
-      case 'AUTHENTICATION_ERROR':
-        console.log('Authentication failed. Check your API key.');
-        break;
-      case 'INSUFFICIENT_BALANCE':
-        console.log('Insufficient balance. Please add funds.');
-        break;
-      case 'RATE_LIMITED':
-        console.log('Rate limited. Retry later.');
-        break;
-      default:
-        console.log(`Error (${error.statusCode}): ${error.message}`);
-    }
-  }
-}
+const generation = await response.json();
 ```
 </CodeGroup>

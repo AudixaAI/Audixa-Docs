@@ -48,41 +48,40 @@ In the [Clone Voices dashboard](https://audixa.ai/app/custom-voices), find your 
 Set the `voice_id` parameter to your Voice ID and the `model` parameter to `advanced`.
 
 <CodeGroup>
-```python Python
-import audixa
+```python Python requests
+import requests
 
-audixa.set_api_key("YOUR_API_KEY")
-
-audio_url = audixa.tts_and_wait(
-    "This is my custom cloned voice.",
-    voice_id="custom_voice_12345",
-    model="advanced",  # Required for custom voices
-    speed=1.0,
+response = requests.post(
+    "https://api.audixa.ai/v3/tts",
+    headers={"X-API-Key": "YOUR_API_KEY"},
+    json={
+        "text": "This request uses an account-owned custom voice for speech.",
+        "voice_id": "custom_voice_12345",
+        "model": "advanced",
+        "audio_format": "mp3",
+    },
+    timeout=30,
 )
+response.raise_for_status()
+print(response.json()["generation_id"])
 ```
 
-```typescript TypeScript
-import Audixa from 'audixa';
-
-const audixa = new Audixa('YOUR_API_KEY');
-
-const audioUrl = await audixa.generateTTS({
-  text: 'This is my custom cloned voice.',
-  voice_id: 'custom_voice_12345',
-  model: 'advanced'  // Required for custom voices
+```javascript JavaScript fetch
+const response = await fetch('https://api.audixa.ai/v3/tts', {
+  method: 'POST',
+  headers: {
+    'X-API-Key': 'YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    text: 'This request uses an account-owned custom voice for speech.',
+    voice_id: 'custom_voice_12345',
+    model: 'advanced',
+    audio_format: 'mp3'
+  })
 });
-```
-
-```javascript JavaScript
-import Audixa from 'audixa';
-
-const audixa = new Audixa('YOUR_API_KEY');
-
-const audioUrl = await audixa.generateTTS({
-  text: 'This is my custom cloned voice.',
-  voice_id: 'custom_voice_12345',
-  model: 'advanced'  // Required for custom voices
-});
+if (!response.ok) throw new Error(await response.text());
+console.log((await response.json()).generation_id);
 ```
 
 ```bash cURL
@@ -90,24 +89,21 @@ curl -X POST "https://api.audixa.ai/v3/tts" \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{
-    "text": "This is my custom cloned voice.",
+    "text": "This request uses an account-owned custom voice for speech.",
     "voice_id": "custom_voice_12345",
     "model": "advanced",
-    "speed": 1.0
+    "audio_format": "mp3"
   }'
 ```
 </CodeGroup>
 
 ## Billing
 
-Clone Voices utilize the **Advanced Model**.
+Clone Voices use the **Advanced Model**, so the active plan's Advanced per-token
+rate and request limits apply.
 
-| Model | Cost |
-|-------|-------------|
-| **Advanced** | 4 credits per token |
-
-<Card title="Understanding Credits" icon="coins" href="/guides/pricing-credits">
-  See our detailed guide on credit calculation.
+<Card title="Understanding Pricing" icon="coins" href="/guides/pricing">
+  Review paid generation, wallet order, and top-up expiry.
 </Card>
 
 ## Managing Your Voices

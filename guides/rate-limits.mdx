@@ -1,177 +1,93 @@
 ---
 title: "Rate Limits"
-description: "Understanding and handling Audixa API rate limits"
+description: "Handle Audixa API request and concurrency limits"
 ---
 
-Audixa applies rate limits to ensure fair usage and maintain service quality for all users. This guide explains the limits and how to handle them.
+Audixa limits API traffic by API key and also enforces the concurrent-generation
+limit attached to the account plan. Limits can change, so this guide does not
+publish a static plan matrix.
 
-## Rate Limit Tiers
+Review the active plan in [Billing](https://audixa.ai/app/billing) and the
+current [Pricing page](https://audixa.ai/pricing). Enterprise terms, if any,
+are the terms agreed for that account.
 
-| Plan | Requests per Minute | Concurrent Jobs |
-|------|---------------------|-----------------|
-| Free | 120 | 5 |
-| Paid | 240 | 20 |
-| Enterprise | Custom | Custom |
+## Response Headers
 
-<Note>
-  Rate limits apply per API key. Contact [sales@audixa.ai](mailto:sales@audixa.ai) for custom enterprise limits.
-</Note>
-
-## Rate Limit Headers
-
-Every API response includes headers showing your current rate limit status:
+Rate-limited endpoints can include standard limit headers such as:
 
 | Header | Description |
-|--------|-------------|
-| `X-RateLimit-Limit` | Maximum requests allowed per minute |
-| `X-RateLimit-Remaining` | Requests remaining in current window |
-| `X-RateLimit-Reset` | Unix timestamp when the limit resets |
+|---|---|
+| `X-RateLimit-Limit` | Request allowance for the current window |
+| `X-RateLimit-Remaining` | Requests remaining in that window |
+| `X-RateLimit-Reset` | When the current window resets |
+| `Retry-After` | Delay to observe before retrying a `429` response |
 
-**Example response headers:**
-```
-X-RateLimit-Limit: 120
-X-RateLimit-Remaining: 115
-X-RateLimit-Reset: 1702300800
-```
+Clients should tolerate a missing optional header and should not hard-code a
+single allowance for every endpoint.
 
-## Handling Rate Limits
+## Handling `429 Too Many Requests`
 
-When you exceed the rate limit, the API returns a `429 Too Many Requests` error:
-
-<ResponseExample>
-```json 429 Too Many Requests
-{
-  "detail": "Rate limit exceeded. Please retry after 30 seconds."
-}
-```
-</ResponseExample>
-
-<Info>
-  Both the Python and Node.js SDKs have **built-in retry logic** that automatically handles rate limits with exponential backoff. You only need to implement manual retry logic if you're using the REST API directly.
-</Info>
-
-### SDK Error Handling
+Read the response and honor `Retry-After` when present. Otherwise, use bounded
+exponential backoff with jitter.
 
 <CodeGroup>
 ```python Python
-from audixa.exceptions import RateLimitError
-
-try:
-    audio_url = audixa.tts_and_wait(
-        "Hello world!",
-        voice_id="am_ethan",
-    )
-except RateLimitError as e:
-    print(f"Rate limited! Retry after {e.retry_after} seconds.")
-```
-
-```typescript TypeScript
-import Audixa, { AudixaError } from 'audixa';
-
-const audixa = new Audixa('YOUR_API_KEY');
-
-try {
-  const audioUrl = await audixa.generateTTS({
-    text: 'Hello world!',
-    voice_id: 'am_ethan',
-    model: 'base'
-  });
-} catch (error) {
-  if (error instanceof AudixaError && error.code === 'RATE_LIMITED') {
-    console.log('Rate limited! Retry later.');
-  }
-}
-```
-
-```javascript JavaScript
-import Audixa, { AudixaError } from 'audixa';
-
-const audixa = new Audixa('YOUR_API_KEY');
-
-try {
-  const audioUrl = await audixa.generateTTS({
-    text: 'Hello world!',
-    voice_id: 'am_ethan',
-    model: 'base'
-  });
-} catch (error) {
-  if (error instanceof AudixaError && error.code === 'RATE_LIMITED') {
-    console.log('Rate limited! Retry later.');
-  }
-}
-```
-</CodeGroup>
-
-### Manual Retry Strategy (REST API)
-
-If using the REST API directly, implement exponential backoff:
-
-<CodeGroup>
-```python Python
+import random
 import time
 import requests
 
-def make_request_with_retry(url, headers, json_data, max_retries=5):
-    for attempt in range(max_retries):
-        response = requests.post(url, headers=headers, json=json_data)
-        
-        if response.status_code == 429:
-            # Get retry delay from header or use exponential backoff
-            retry_after = int(response.headers.get("Retry-After", 2 ** attempt))
-            print(f"Rate limited. Retrying in {retry_after} seconds...")
-            time.sleep(retry_after)
-            continue
-        
-        return response
-    
-    raise Exception("Max retries exceeded")
+
+def request_with_retry(method, url, *, max_retries=5, **kwargs):
+    for attempt in range(max_retries + 1):
+        response = requests.request(method, url, **kwargs)
+        if response.status_code != 429:
+            return response
+        if attempt == max_retries:
+            response.raise_for_status()
+
+        header_delay = response.headers.get("Retry-After")
+        delay = float(header_delay) if header_delay else min(2 ** attempt, 30)
+        time.sleep(delay + random.random())
+
+    raise RuntimeError("Retry loop exited unexpectedly")
 ```
 
 ```javascript JavaScript
-async function makeRequestWithRetry(url, options, maxRetries = 5) {
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
+async function requestWithRetry(url, options, maxRetries = 5) {
+  for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
     const response = await fetch(url, options);
-    
-    if (response.status === 429) {
-      const retryAfter = parseInt(response.headers.get("Retry-After")) || (2 ** attempt);
-      console.log(`Rate limited. Retrying in ${retryAfter} seconds...`);
-      await new Promise(r => setTimeout(r, retryAfter * 1000));
-      continue;
-    }
-    
-    return response;
+    if (response.status !== 429) return response;
+    if (attempt === maxRetries) throw new Error(await response.text());
+
+    const headerDelay = Number(response.headers.get('Retry-After'));
+    const seconds = Number.isFinite(headerDelay)
+      ? headerDelay
+      : Math.min(2 ** attempt, 30) + Math.random();
+    await new Promise((resolve) => setTimeout(resolve, seconds * 1000));
   }
-  
-  throw new Error("Max retries exceeded");
 }
 ```
 </CodeGroup>
+
+## Concurrency Errors
+
+A request can be below its HTTP request allowance and still exceed the plan's
+concurrent-generation limit. When this happens, wait for an existing generation
+to reach `COMPLETED` or `FAILED` before submitting another one.
 
 ## Best Practices
 
 <CardGroup cols={2}>
-  <Card title="Batch Requests" icon="layer-group">
-    Combine multiple short texts into fewer requests when possible.
+  <Card title="Back Off" icon="clock">
+    Honor `Retry-After`, cap retries, and add jitter to avoid synchronized retries.
   </Card>
-  <Card title="Implement Backoff" icon="clock">
-    Use exponential backoff when retrying failed requests.
+  <Card title="Poll Deliberately" icon="arrows-rotate">
+    Add a delay between status requests and stop at `COMPLETED` or `FAILED`.
   </Card>
-  <Card title="Monitor Usage" icon="chart-line">
-    Check rate limit headers to track your usage.
+  <Card title="Limit Local Concurrency" icon="gauge">
+    Queue work in your application instead of submitting an unbounded burst.
   </Card>
-  <Card title="Cache Results" icon="database">
-    Store generated audio to avoid regenerating the same content.
+  <Card title="Reuse Completed Results" icon="database">
+    Store the returned audio URL or your own permitted copy instead of regenerating identical input.
   </Card>
 </CardGroup>
-
-## Need Higher Limits?
-
-If you're hitting rate limits regularly, consider:
-
-1. **Upgrading your plan** for higher per-minute limits
-2. **Contacting sales** for custom enterprise limits
-3. **Optimizing your code** to reduce unnecessary requests
-
-<Card title="Contact Sales" icon="envelope" href="mailto:sales@audixa.ai">
-  Discuss custom rate limits for your enterprise needs.
-</Card>

@@ -82,41 +82,35 @@ curl -X GET "https://api.audixa.ai/v3/tts?generation_id=gen_abc123" \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
-```python Python
-import audixa
+```python Python requests
+import requests
 
-audixa.set_api_key("YOUR_API_KEY")
+response = requests.get(
+    "https://api.audixa.ai/v3/tts",
+    headers={"X-API-Key": "YOUR_API_KEY"},
+    params={"generation_id": "gen_abc123"},
+    timeout=30,
+)
+response.raise_for_status()
+generation = response.json()
 
-status = audixa.status("gen_abc123")
-print(f"Status: {status['status']}")
-
-if status["status"] == "COMPLETED":
-    print(f"Audio URL: {status['audio_url']}")
+print(generation["status"])
+if generation["status"] == "COMPLETED":
+    print(generation["audio_url"])
 ```
 
-```typescript TypeScript
-import Audixa from 'audixa';
+```javascript JavaScript fetch
+const query = new URLSearchParams({ generation_id: 'gen_abc123' });
+const response = await fetch(`https://api.audixa.ai/v3/tts?${query}`, {
+  method: 'GET',
+  headers: { 'X-API-Key': 'YOUR_API_KEY' }
+});
+if (!response.ok) throw new Error(await response.text());
+const generation = await response.json();
 
-const audixa = new Audixa('YOUR_API_KEY');
-
-const status = await audixa.getStatus('gen_abc123');
-console.log('Status:', status.status);
-
-if (status.status === 'COMPLETED') {
-  console.log('Audio URL:', status.audio_url);
-}
-```
-
-```javascript JavaScript
-import Audixa from 'audixa';
-
-const audixa = new Audixa('YOUR_API_KEY');
-
-const status = await audixa.getStatus('gen_abc123');
-console.log('Status:', status.status);
-
-if (status.status === 'COMPLETED') {
-  console.log('Audio URL:', status.audio_url);
+console.log(generation.status);
+if (generation.status === 'COMPLETED') {
+  console.log(generation.audio_url);
 }
 ```
 </RequestExample>
@@ -126,7 +120,7 @@ if (status.status === 'COMPLETED') {
 {
   "generation_id": "gen_abc123",
   "status": "COMPLETED",
-  "input_text": "Hello world",
+  "input_text": "Hello from Audixa. This completed request passed validation.",
   "voice_id": "am_ethan",
   "voice_name": "Ethan",
   "model": "base",
@@ -145,10 +139,10 @@ if (status.status === 'COMPLETED') {
 
 <CardGroup cols={2}>
   <Card title="Poll Interval" icon="clock">
-    Poll every 1-2 seconds. Don't poll faster than once per second.
+    Use a short delay with backoff, and honor `429` plus any `Retry-After` header.
   </Card>
   <Card title="Timeout" icon="hourglass">
-    Set a maximum timeout (e.g., 60 seconds) to avoid infinite loops.
+    Set a maximum polling duration appropriate for your application.
   </Card>
   <Card title="Error Handling" icon="triangle-exclamation">
     Always handle the `FAILED` status gracefully with retry logic.
@@ -171,7 +165,7 @@ Missing or invalid API key.
 </Accordion>
 
 <Accordion title="404 Not Found">
-Invalid or expired generation ID.
+Unknown generation ID, or a generation owned by another account.
 
 ```json
 {
@@ -179,9 +173,6 @@ Invalid or expired generation ID.
 }
 ```
 
-<Note>
-  Generation IDs expire 24 hours after creation.
-</Note>
 </Accordion>
 
 <Accordion title="429 Too Many Requests">

@@ -83,36 +83,32 @@ curl -X GET "https://api.audixa.ai/v3/history?limit=10" \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
-```python Python
-import audixa
+```python Python requests
+import requests
 
-audixa.set_api_key("YOUR_API_KEY")
+response = requests.get(
+    "https://api.audixa.ai/v3/history",
+    headers={"X-API-Key": "YOUR_API_KEY"},
+    params={"limit": 10},
+    timeout=30,
+)
+response.raise_for_status()
 
-history = audixa.history(limit=10)
-for item in history:
+for item in response.json()["history"]:
     print(f"{item['generation_id']}: {item['status']}")
 ```
 
-```typescript TypeScript
-import Audixa from 'audixa';
+```javascript JavaScript fetch
+const query = new URLSearchParams({ limit: '10' });
+const response = await fetch(`https://api.audixa.ai/v3/history?${query}`, {
+  headers: { 'X-API-Key': 'YOUR_API_KEY' }
+});
+if (!response.ok) throw new Error(await response.text());
 
-const audixa = new Audixa('YOUR_API_KEY');
-
-const { history } = await audixa.getHistory({ limit: 10 });
+const { history } = await response.json();
 for (const item of history) {
   console.log(`${item.generation_id}: ${item.status}`);
 }
-```
-
-```javascript JavaScript
-import Audixa from 'audixa';
-
-const audixa = new Audixa('YOUR_API_KEY');
-
-const { history } = await audixa.getHistory({ limit: 10 });
-history.forEach(item => {
-  console.log(`${item.generation_id}: ${item.status}`);
-});
 ```
 </RequestExample>
 
